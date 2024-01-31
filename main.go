@@ -21,7 +21,6 @@ var (
 	lastPage     = ""         // Stocke l'URL de la dernière page accédée
 )
 
-
 func init() {
 	// loads values from .env into the system
 	if err := godotenv.Load("data.env"); err != nil {
@@ -86,6 +85,8 @@ func main() {
 		}
 	}
 
+	
+
 
 	// Login route
 	http.HandleFunc("/login/github/", rateLimitMiddleware(github.GithubLoginHandler))
@@ -118,11 +119,13 @@ func main() {
 	http.HandleFunc("/dislike/", rateLimitMiddleware(forum.DislikeDiscussion))
 
 
-	// Gestion des connexions WebSocket
+	
 	http.HandleFunc("/ws", forum.HandleConnections)
-
-	// Gestion des messages
+	
+	http.HandleFunc("/get_users", forum.GetUsersHandler)
+	
 	go forum.HandleMessages()
+
 
 	// Définir le dossier "static" comme dossier de fichiers statiques
 	fs := http.FileServer(http.Dir("assets"))
@@ -130,11 +133,9 @@ func main() {
 	http.Handle("/static/", rateLimitMiddleware(http.StripPrefix("/static/", fs).ServeHTTP))
 
 
-	fmt.Println("Voici le lien pour ouvrir la page web https://localhost:8080/")
-	
-	// Utiliser http.ListenAndServeTLS au lieu de http.ListenAndServe
-	err := http.ListenAndServeTLS(":8080", "localhost.pem", "localhost-key.pem", nil)
-	if err != nil {
-		log.Fatal("ListenAndServeTLS: ", err)
-	}
+	// Démarrage du serveur HTTP
+	port := 8080
+	fmt.Printf("Voici le lien pour ouvrir la page web http://localhost:%d/", port)
+	println()
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }

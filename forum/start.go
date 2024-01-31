@@ -126,7 +126,14 @@ func Sign_up(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			
+			// Ajoutez l'utilisateur à la liste des utilisateurs connectés
+			userLock.Lock()
+			connectedUsers[username] = true
+			userLock.Unlock()
+
+			// Envoie la liste mise à jour à tous les clients connectés
+			SendUserList()
+
 
 			// Rediriger l'utilisateur vers la page "/home" après l'enregistrement
 			http.Redirect(w, r, "/home", http.StatusSeeOther)
@@ -195,6 +202,14 @@ func Log_in(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 
+				// Ajoutez l'utilisateur à la liste des utilisateurs connectés
+				userLock.Lock()
+				connectedUsers[username] = true
+				userLock.Unlock()
+
+				// Envoie la liste mise à jour à tous les clients connectés
+				SendUserList()
+
 				// Redirigez l'utilisateur vers la page "/"
 				http.Redirect(w, r, "/home", http.StatusSeeOther)
 				return
@@ -224,7 +239,9 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	var notification []string
 	// Supprimer le cookie "username"
 	usernameCookie, err := r.Cookie("username")
+	var username string
 	if err == nil {
+		username = usernameCookie.Value
 		usernameCookie.Expires = time.Now().AddDate(0, 0, -1) // Définir une date d'expiration dans le passé pour supprimer le cookie
 		http.SetCookie(w, usernameCookie)
 	}
@@ -235,6 +252,14 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		sessionCookie.Expires = time.Now().AddDate(0, 0, -1) // Définir une date d'expiration dans le passé pour supprimer le cookie
 		http.SetCookie(w, sessionCookie)
 	}
+
+	userLock.Lock()
+	delete(connectedUsers, username)
+	userLock.Unlock()
+
+	// Envoie la liste mise à jour à tous les clients connectés
+	SendUserList()
+
 
 	// Créer un message de notification
 	notification = append(notification, "Déconnexion réussie.")
@@ -332,6 +357,14 @@ func Home(w http.ResponseWriter, r *http.Request) {
 
 		discussions[i].NumberDislike = numberDislike
 	}
+
+	// Ajoutez l'utilisateur à la liste des utilisateurs connectés
+				userLock.Lock()
+				connectedUsers[username] = true
+				userLock.Unlock()
+
+				// Envoie la liste mise à jour à tous les clients connectés
+				SendUserList()
 
 	// Créer une structure de données pour passer les informations au modèle
 	data := struct {

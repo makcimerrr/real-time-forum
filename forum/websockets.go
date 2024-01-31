@@ -1,86 +1,109 @@
-// main.go
 package forum
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
 
-var clients = make(map[*websocket.Conn]string) // Map pour stocker les clients connectés avec leur username
-var broadcast = make(chan Message)             // Channel pour diffuser des messages à tous les clients
-
-// Message struct pour stocker les messages envoyés par les clients
-type Message struct {
-	Action   string `json:"action"`
-	Username string `json:"username"`
-}
-
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
-}
-
 func HandleConnections(w http.ResponseWriter, r *http.Request) {
-	// Upgrade de la connexion HTTP à une connexion WebSocket
-	ws, err := upgrader.Upgrade(w, r, nil)
+	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return
 	}
-	defer ws.Close()
+	client := &Client{conn: conn}
+	clients[client] = true
 
-	// Obtenez le nom d'utilisateur à partir des cookies
-	cookie, err := r.Cookie("username")
-	if err != nil {
-		fmt.Println("Erreur de lecture du cookie:", err)
-		return
-	}
-	username := cookie.Value
+    defer delete(clients, client)
 
-	// Enregistrez le nouveau client avec son nom d'utilisateur
-	clients[ws] = username
-
-	// Informez les autres clients qu'un nouvel utilisateur a rejoint
-	broadcast <- Message{Action: "join", Username: username}
+	/*defer func() {
+		delete(clients, client)
+		conn.Close()
+	}()*/
 
 	for {
-		// Attendre et lire le prochain message du client (peut être ignoré dans ce cas)
-		_, _, err := ws.ReadMessage()
+		messageType, p, err := conn.ReadMessage()
 		if err != nil {
-			fmt.Printf("Erreur de lecture du message: %v\n", err)
-			break
+			log.Println(err)
+			return
 		}
-	}
-}
 
-func HandleMessages() {
-	for {
-		// Récupérez le prochain message du canal de diffusion (peut être ignoré dans ce cas)
-		<-broadcast
-		// Envoyez la liste des utilisateurs connectés à tous les clients
-		userList := getUserList()
-		for client := range clients {
-			err := client.WriteJSON(userList)
-			if err != nil {
-				fmt.Printf("Erreur d'écriture du message: %v\n", err)
-				client.Close()
-				delete(clients, client)
+		// Si le message est de type texte
+        if messageType == websocket.TextMessage {
+            // Traitez le message JSON
+            var message map[string]interface{}
+            if err := json.Unmarshal(p, &message); err != nil {
+                log.Println("Erreur lors de la lecture du message JSON:", err)
+                continue
+            }
+
+            // Vérifiez le type d'événement
+            if eventType, ok := message["event"].(string); ok {
+                switch eventType {
+                case "user_leaving":
+                    // Récupérez le nom d'utilisateur du message
+                    if username, ok := message["username"].(string); ok {
+                        // Affichez le message dans la console avec fmt
+                        fmt.Printf("Utilisateur déconnecté : %s\n", username)
+                    }
+                default:
+                    log.Println("Événement non pris en charge:", eventType)
+                }
 			}
 		}
 	}
 }
 
+func HandleMessages() {
+   	ticker := time.NewTicker(10 * time.Millisecond)
+	defer ticker.Stop()
 
-func getUserList() []string {
-	// Construisez la liste des utilisateurs connectés
-	var userList []string
-	for _, username := range clients {
-		userList = append(userList, username)
+	for range ticker.C {
+		SendUserList()
 	}
-	return userList
 }
 
+
+func SendUserList() {
+    userLock.Lock()
+    defer userLock.Unlock()
+
+    userList := make([]string, 0, len(connectedUsers))
+    for user := range connectedUsers {
+        userList = append(userList, user)
+    }
+
+    message := strings.Join(userList, ", ")
+
+    // Mise à jour de la variable globale
+    connectedUsersList = userList
+
+    /* Affiche la liste dans la console côté serveur
+
+    if len(userList) > 1 {
+        fmt.Println("Liste des utilisateurs connectés :", message)
+    }*/
+
+    // Envoyer la liste uniquement aux clients connectés
+    for client := range clients {
+        err := client.conn.WriteMessage(websocket.TextMessage, []byte(message))
+        if err != nil {
+            // Gestion de l'erreur (par exemple, log ou fermeture de la connexion)
+            fmt.Println("Erreur lors de l'envoi de la liste à un client :", err)
+            // Vous pouvez également retirer le client du tableau clients ici
+        }
+    }
+}
+
+func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
+    // Retourne la liste des utilisateurs connectés au format JSON
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(connectedUsersList)
+}
 
