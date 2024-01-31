@@ -117,16 +117,23 @@ func main() {
 	http.HandleFunc("/like/", rateLimitMiddleware(forum.LikeDiscussion))
 	http.HandleFunc("/dislike/", rateLimitMiddleware(forum.DislikeDiscussion))
 
+
+	// Gestion des connexions WebSocket
+	http.HandleFunc("/ws", forum.HandleConnections)
+
+	// Gestion des messages
+	go forum.HandleMessages()
+
 	// Définir le dossier "static" comme dossier de fichiers statiques
 	fs := http.FileServer(http.Dir("assets"))
 	// Utiliser le middleware pour le rate limiting
 	http.Handle("/static/", rateLimitMiddleware(http.StripPrefix("/static/", fs).ServeHTTP))
 
 
-	fmt.Println("Voici le lien pour ouvrir la page web https://localhost:8000/")
+	fmt.Println("Voici le lien pour ouvrir la page web https://localhost:8080/")
 	
 	// Utiliser http.ListenAndServeTLS au lieu de http.ListenAndServe
-	err := http.ListenAndServeTLS(":8000", "localhost.pem", "localhost-key.pem", nil)
+	err := http.ListenAndServeTLS(":8080", "localhost.pem", "localhost-key.pem", nil)
 	if err != nil {
 		log.Fatal("ListenAndServeTLS: ", err)
 	}

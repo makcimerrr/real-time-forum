@@ -250,6 +250,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+
 	// Vérifiez la validité de la session
 	validSession, errMsg := isSessionValid(r)
 	if !validSession {
