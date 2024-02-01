@@ -6,9 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Real Time Forum</title>
     <style>
-        /* Ajoutez du CSS pour masquer initialement les divs sauf "accueil" */
         .registrationForm,
-        .home {
+        .home,
+        .loginForm {
             display: none;
         }
     </style>
@@ -18,10 +18,18 @@
     <h1>Forum</h1>
 
     <div class="accueil">
-        <a onclick="">Login</a>
+        <a onclick="showDiv('loginForm')">Login</a>
         <a onclick="showDiv('registrationForm')">Register</a>
     </div>
+    <div class="loginForm">
+        <label for="username">Username ou Email:</label>
+        <input type="text" id="UsernameOrEmail" name="UsernameOrEmail" required><br>
 
+        <label for="password">Mot de passe:</label>
+        <input type="password" id="password" name="password" required><br>
+
+        <button type="button" onclick="loginUser()">Se connecter</button>
+    </div>
     <div class="registrationForm">
         <label for="username">Nom d'utilisateur:</label>
         <input type="text" id="username" name="username" required><br>

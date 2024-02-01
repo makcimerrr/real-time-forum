@@ -22,6 +22,7 @@ function registerUser() {
   var lastName = document.getElementById("lastName").value;
 
   var user = {
+    type: "register",
     username: username,
     age: age,
     gender: gender,
@@ -58,14 +59,6 @@ function registerUser() {
     }
     socket.close();
   };
-
-  // Si l'enregistrement est réussi, créer les cookies
-  var username = user.username; // Utilisez la valeur de l'username à partir de votre objet User
-  var token = generateUniqueToken(); // Appeler une fonction pour générer un token unique
-
-  // Définir les cookies
-  setCookie("username", username, 30); // 30 jours de durée de vie du cookie
-  setCookie("token", token, 30);
 
   // Si l'enregistrement est réussi, masquer la div "registrationForm" et afficher la div "home"
   showDiv("home");
@@ -110,20 +103,11 @@ function generateUniqueToken() {
   return base64Token;
 }
 
-// Fonction pour définir un cookie avec une durée de vie spécifique
-function setCookie(name, value, days) {
-  var expires = "";
-  if (days) {
-    var date = new Date();
-    date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
-    expires = "; expires=" + date.toUTCString();
-  }
-  document.cookie = name + "=" + value + expires + "; path=/";
-}
-
 function showDiv(divName) {
   // Masquer toutes les divs
-  var divs = document.querySelectorAll(".accueil, .registrationForm, .home");
+  var divs = document.querySelectorAll(
+    ".accueil, .loginForm, .registrationForm, .home"
+  );
   divs.forEach(function (div) {
     div.style.display = "none";
   });
