@@ -5,10 +5,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Real Time Forum</title>
+    <style>
+        /* Ajoutez du CSS pour masquer initialement les divs sauf "accueil" */
+        .registrationForm,
+        .home {
+            display: none;
+        }
+    </style>
 </head>
 
 <body>
     <h1>Forum</h1>
+
+    <div class="accueil">
+        <a onclick="">Login</a>
+        <a onclick="showDiv('registrationForm')">Register</a>
+    </div>
 
     <div class="registrationForm">
         <label for="username">Nom d'utilisateur:</label>
@@ -39,6 +51,9 @@
 
 
         <button type="button" onclick="registerUser()">S'inscrire</button>
+    </div>
+
+    <div class="home">
     </div>
 
     <script src="/static/js/script.js"></script>
