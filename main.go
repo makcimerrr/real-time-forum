@@ -1,141 +1,146 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
-	"sync"
-	"time"
+	"text/template"
 
-	"forum/facebook"
-	"forum/forum"
-	"forum/github"
-
-	"github.com/joho/godotenv"
+	"github.com/gorilla/websocket"
+	_ "modernc.org/sqlite"
 )
 
 var (
-	requestsMap = make(map[string]int)
-	lastReset   = time.Now() // Stocke le temps de la dernière réinitialisation
-	mutex       = &sync.Mutex{}
-	lastPage     = ""         // Stocke l'URL de la dernière page accédée
+	clients = make(map[*websocket.Conn]bool) // Map pour stocker les connexions des clients
+
+	upgrader = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
 )
 
-func init() {
-	// loads values from .env into the system
-	if err := godotenv.Load("data.env"); err != nil {
-		log.Fatal("No .env file found")
-	}
+var templates = template.Must(template.ParseGlob("templates/*.html"))
+var db *sql.DB
+
+type User struct {
+	Username  string `json:"username"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
+	Age       string `json:"age"`
+	Gender    string `json:"gender"`
+	FristName string `json:"firstName"`
+	LastName  string `json:"lastName"`
 }
 
 func main() {
-	if err := godotenv.Load("data.env"); err != nil {
-		log.Fatal("Error loading .env file:", err)
+	var err error
+	db, err = sql.Open("sqlite", "database/data.db")
+	if err != nil {
+		log.Fatal(err)
 	}
+	defer db.Close()
 
-	// Middleware pour le rate limiting
-	rateLimitMiddleware := func(next http.HandlerFunc) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			// Vérifiez si une minute s'est écoulée depuis la dernière réinitialisation
-		if time.Since(lastReset) > time.Minute {
-			// Si oui, réinitialisez le compteur de requêtes
-			mutex.Lock()
-			requestsMap = make(map[string]int)
-			lastReset = time.Now()
-			mutex.Unlock()
-			
-		}
-			// Vérifiez si l'adresse demandée est "/static/" et bloquez la requête si c'est le cas
-		if r.URL.Path == "/static/" {
-			
-			log.Printf("Rate limit for acces to /static/")
-			http.Error(w, "Access to /static/ is not allowed", http.StatusForbidden)
-			return
-		}
-
-		// Vérifiez si l'URL change (changement de page)
-		if r.URL.Path != lastPage {
-			// Si oui, réinitialisez le compteur de requêtes
-			mutex.Lock()
-			requestsMap = make(map[string]int)
-			lastPage = r.URL.Path
-			lastReset = time.Now()
-			mutex.Unlock()
-		}
-
-			// Utilisez l'adresse IP de l'utilisateur comme clé de suivi
-			key := r.RemoteAddr
-
-			// Verrouillez la carte pour éviter les accès concurrents
-			mutex.Lock()
-			defer mutex.Unlock()
-
-			// Incrémente le compteur de requêtes pour l'adresse IP actuelle
-			requestsMap[key]++
-
-			// Si le nombre de requêtes dépasse une limite définie, renvoyer une réponse d'erreur
-			if requestsMap[key] > 15 { // Par exemple, limitez à 10 requêtes par minute
-				log.Printf("Rate limit exceeded for %s. Requests: %d", key, requestsMap[key])
-				http.Error(w, "Rate limit exceeded. Wait 1 minute.", http.StatusTooManyRequests)
-				return
-			}
-
-			// Laissez passer la requête vers le gestionnaire suivant
-			next(w, r)
-		}
-	}
-
-	
-
-
-	// Login route
-	http.HandleFunc("/login/github/", rateLimitMiddleware(github.GithubLoginHandler))
-
-	// Github callback
-	http.HandleFunc("/login/github/callback",rateLimitMiddleware(github.GithubCallbackHandler))
-
-	// Route where the authenticated user is redirected to
-	http.HandleFunc("/loggedin", rateLimitMiddleware(func(w http.ResponseWriter, r *http.Request) {
-		github.LoggedinHandler(w, r, "")
-	}))
-
-	http.HandleFunc("/login/facebook", rateLimitMiddleware(facebook.HandleFacebookLogin))
-	http.HandleFunc("/oauth2callback", rateLimitMiddleware(facebook.HandleFacebookCallback))
-	//http.HandleFunc("/delete", facebook.HandleDelete)
-
-	http.HandleFunc("/", rateLimitMiddleware(forum.Home))
-	http.HandleFunc("/404", rateLimitMiddleware(forum.HandleNotFound))
-	http.HandleFunc("/500", rateLimitMiddleware(forum.HandleServerError))
-	http.HandleFunc("/400", rateLimitMiddleware(forum.HandleBadRequest))
-	http.HandleFunc("/logorsign", rateLimitMiddleware(forum.Logorsign))
-	http.HandleFunc("/log_in", rateLimitMiddleware(forum.Log_in))
-	http.HandleFunc("/sign_up", rateLimitMiddleware(forum.Sign_up))
-	http.HandleFunc("/logout", rateLimitMiddleware(forum.Logout))
-	http.HandleFunc("/home", rateLimitMiddleware(forum.Home))
-	http.HandleFunc("/create_discussion", rateLimitMiddleware(forum.CreateDiscussion))
-	http.HandleFunc("/discussion/", rateLimitMiddleware(forum.ShowDiscussion))
-	http.HandleFunc("/add_message/", rateLimitMiddleware(forum.AddMessage))
-	http.HandleFunc("/like/", rateLimitMiddleware(forum.LikeDiscussion))
-	http.HandleFunc("/dislike/", rateLimitMiddleware(forum.DislikeDiscussion))
-
-
-	
-	http.HandleFunc("/ws", forum.HandleConnections)
-	
-	http.HandleFunc("/get_users", forum.GetUsersHandler)
-	
-	go forum.HandleMessages()
-
+	http.HandleFunc("/", indexHandler)
+	http.HandleFunc("/ws", websocketHandler)
 
 	// Définir le dossier "static" comme dossier de fichiers statiques
 	fs := http.FileServer(http.Dir("assets"))
-	// Utiliser le middleware pour le rate limiting
-	http.Handle("/static/", rateLimitMiddleware(http.StripPrefix("/static/", fs).ServeHTTP))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
-
-	// Démarrage du serveur HTTP
 	port := 8080
 	fmt.Printf("Voici le lien pour ouvrir la page web http://localhost:%d/", port)
 	println()
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+}
+
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	err := templates.ExecuteTemplate(w, "index.html", nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func websocketHandler(w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer conn.Close()
+
+	Existing := false
+	for {
+		var user User
+		err := conn.ReadJSON(&user)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		// Vérifier si l'username ou l'adresse email est déjà pris
+		if usernameExists(user.Username) {
+			// Si l'username est déjà pris, envoyer un message d'erreur
+			err = conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "error", "message": "Username déjà pris. Veuillez en choisir un autre."}`))
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			Existing = true
+		}
+
+		if emailExists(user.Email) {
+			// Si l'adresse email est déjà prise, envoyer un message d'erreur
+			err = conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "error", "message": "Email déjà utilisé. Veuillez en choisir un autre."}`))
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			Existing = true
+		}
+
+		if !Existing {
+			// Si tout est OK, insérer les données dans la base de données
+			_, err = db.Exec("INSERT INTO users (username, email, password, age, gender, first_name, last_name) VALUES (?, ?, ?, ?, ?, ?, ?)",
+				user.Username, user.Email, user.Password, user.Age, user.Gender, user.FristName, user.LastName)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			// Confirmer l'inscription à l'utilisateur via la websocket
+			err = conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "join", "message": "Bienvenue, `+user.Username+` !"}`))
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+
+		} else {
+			fmt.Println("Error username or email are already taken ! ")
+		}
+
+	}
+}
+
+func usernameExists(username string) bool {
+	// Vérifier si l'username existe dans la base de données
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM users WHERE username = ?", username).Scan(&count)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	return count > 0
+}
+
+func emailExists(email string) bool {
+	// Vérifier si l'adresse email existe dans la base de données
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM users WHERE email = ?", email).Scan(&count)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	return count > 0
 }

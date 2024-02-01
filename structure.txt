@@ -1,0 +1,19 @@
+forum/
+|-- main.go
+|-- static/
+|   |-- css/
+|   |   |-- style.css
+|   |-- js/
+|       |-- script.js
+|-- templates/
+|   |-- index.html
+|   |-- forum.html
+|-- backend/
+|   |-- user/
+|   |   |-- user.go
+|   |   |-- handlers.go
+|   |-- discussion/
+|   |   |-- discussion.go
+|   |   |-- handlers.go
+|-- go.mod
+|-- go.sum

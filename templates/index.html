@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Time Forum</title>
+</head>
+
+<body>
+    <h1>Forum</h1>
+
+    <div class="registrationForm">
+        <label for="username">Nom d'utilisateur:</label>
+        <input type="text" id="username" name="username" required><br>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required><br>
+
+        <label for="password">Mot de passe:</label>
+        <input type="password" id="password" name="password" required><br>
+
+        <label for="age">Age:</label>
+        <input type="number" id="age" name="age" required min="1"><br>
+
+        <label for="gender">Genre:</label>
+        <select name="gender" id="gender">
+            <option value="male">Homme</option>
+            <option value="female">Femme</option>
+        </select><br>
+        <label for="firstName">Prénom:</label>
+        <input type="text" id="firstName" name="firstName" required><br>
+
+        <label for="lastName">Nom de famille:</label>
+        <input type="text" id="lastName" name="lastName" required><br>
+
+        <!-- Ajoutez cette div pour afficher les messages d'erreur -->
+        <div id="errorText" style="color: red;"></div>
+
+
+        <button type="button" onclick="registerUser()">S'inscrire</button>
+    </div>
+
+    <script src="/static/js/script.js"></script>
+</body>
+
+</html>
