@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	clients = make(map[*websocket.Conn]bool) // Map pour stocker les connexions des clients
+	//clients = make(map[*websocket.Conn]bool) // Map pour stocker les connexions des clients
 
 	upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -28,14 +28,16 @@ var templates = template.Must(template.ParseGlob("templates/*.html"))
 var db *sql.DB
 
 type User struct {
-	Type      string `json:"type"` // Type de l'opération (register ou login
-	Username  string `json:"username"`
-	Email     string `json:"email"`
-	Password  string `json:"password"`
-	Age       string `json:"age"`
-	Gender    string `json:"gender"`
-	FristName string `json:"firstName"`
-	LastName  string `json:"lastName"`
+	Type          string `json:"type"` // Type de l'opération (register ou login)
+	Username      string `json:"username"`
+	LoginUser     string `json:"loginuser"`
+	LoginPassword string `json:"loginpassword"`
+	Email         string `json:"email"`
+	Password      string `json:"password"`
+	Age           string `json:"age"`
+	Gender        string `json:"gender"`
+	FristName     string `json:"firstName"`
+	LastName      string `json:"lastName"`
 }
 
 func main() {
@@ -92,7 +94,7 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 		if user.Type == "register" {
 			Register(conn, user)
 		} else if user.Type == "login" {
-			// Ajoutez la logique de gestion de la connexion ici
+			Login(w, conn, user)
 		} else {
 			log.Println("Unknown request type:", user.Type)
 		}
@@ -110,6 +112,7 @@ func Register(conn *websocket.Conn, user User) {
 			log.Println(err)
 			return
 		}
+
 		Existing = true
 	}
 
@@ -144,6 +147,48 @@ func Register(conn *websocket.Conn, user User) {
 	}
 }
 
+func Login(w http.ResponseWriter, conn *websocket.Conn, user User) {
+	loginemail := user.LoginUser
+	loginpassword := user.LoginPassword
+
+	var trueemail string
+	var truepassword uint32
+	var username string
+
+	fmt.Println("1")
+
+	err := db.QueryRow("SELECT username, email, password FROM users WHERE email = ?", loginemail).Scan(&username, &trueemail, &truepassword)
+	if err != nil {
+		err = conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "error", "message": Email unknown !"}`))
+		return
+	} else {
+		fmt.Println("2")
+		hashloginpassword := hash(loginpassword)
+		// Vérifier le mot de passe
+		if hashloginpassword != truepassword {
+			err := conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "error", "message": Password Incorrect !"}`))
+			if err != nil {
+				log.Println(err)
+				return
+			}
+		} else {
+			fmt.Println("3")
+			// L'utilisateur est connecté avec succès
+			err := CreateAndSetSessionCookies(w, username)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			// Confirmer l'inscription à l'utilisateur via la websocket
+			err = conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "login", "message": "Connexion réussi, `+username+` !"}`))
+			if err != nil {
+				log.Println(err)
+			}
+		}
+	}
+
+}
+
 func usernameExists(username string) bool {
 	// Vérifier si l'username existe dans la base de données
 	var count int
@@ -166,39 +211,6 @@ func emailExists(email string) bool {
 	return count > 0
 }
 
-func Log_in(w http.ResponseWriter, r *http.Request) {
-	loginemail := r.FormValue("loginemail")
-	loginpassword := r.FormValue("loginpassword")
-	// Ouverture de la connexion à la base de données
-	db, err := sql.Open("sqlite", "database/data.db")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer db.Close()
-	var trueemail string
-	var truepassword uint32
-	var username string
-	err = db.QueryRow("SELECT username, email, mot_de_passe FROM users WHERE email = ?", loginemail).Scan(&username, &trueemail, &truepassword)
-	if err != nil {
-		fmt.Println(err)
-		return
-	} else {
-		hashloginpassword := hash(loginpassword)
-		// Vérifier le mot de passe
-		if hashloginpassword != truepassword {
-			fmt.Println("Password incorrect")
-		} else {
-			// L'utilisateur est connecté avec succès
-			err := CreateAndSetSessionCookies(w, username)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-		}
-	}
-}
-
 func generateSessionToken() (string, error) {
 	token := make([]byte, 32) // Crée un slice de bytes de 32 octets
 	_, err := rand.Read(token)
@@ -207,20 +219,16 @@ func generateSessionToken() (string, error) {
 	}
 	return base64.URLEncoding.EncodeToString(token), nil
 }
+
 func CreateAndSetSessionCookies(w http.ResponseWriter, username string) error {
 	// Générer un nouveau jeton de session uniquement si le nom d'utilisateur n'est pas vide
 	if username == "" {
-		return errors.New("Username is empty")
+		return errors.New("username is empty")
 	}
-	// Ouvrir une connexion à la base de données
-	db, err := sql.Open("sqlite", "database/data.db")
-	if err != nil {
-		return err
-	}
-	defer db.Close()
+
 	// Vérifier si l'utilisateur a déjà une entrée dans la base de données
 	var existingSessionToken string
-	err = db.QueryRow("SELECT sessionToken FROM token_user WHERE username = ?", username).Scan(&existingSessionToken)
+	err := db.QueryRow("SELECT sessionToken FROM token_user WHERE username = ?", username).Scan(&existingSessionToken)
 	if err == sql.ErrNoRows {
 		// Si l'utilisateur n'a pas encore d'entrée, générer un nouveau jeton de session
 		sessionToken, err := generateSessionToken()

@@ -23,10 +23,13 @@
     </div>
     <div class="loginForm">
         <label for="username">Username ou Email:</label>
-        <input type="text" id="UsernameOrEmail" name="UsernameOrEmail" required><br>
+        <input type="text" id="loginuser" name="loginuser" required><br>
 
         <label for="password">Mot de passe:</label>
-        <input type="password" id="password" name="password" required><br>
+        <input type="password" id="loginpassword" name="loginpassword" required><br>
+
+        <!-- Ajoutez cette div pour afficher les messages d'erreur -->
+        <div id="errorText" style="color: red;"></div>
 
         <button type="button" onclick="loginUser()">Se connecter</button>
     </div>

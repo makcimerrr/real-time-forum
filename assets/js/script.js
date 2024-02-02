@@ -127,3 +127,48 @@ function getCookie(name) {
   }
   return null;
 }
+
+function loginUser() {
+  // Effacer le contenu de la zone de texte d'erreur
+  document.getElementById("errorText").innerText = "";
+
+  var loginuser = document.getElementById("loginuser").value;
+  var loginpassword = document.getElementById("loginpassword").value;
+
+  var user = {
+    type: "login",
+    loginuser: loginuser,
+    loginpassword: loginpassword,
+  };
+
+  // Établir une connexion WebSocket
+  var socket = new WebSocket("ws://" + window.location.host + "/ws");
+
+  // Envoyer les données utilisateur via WebSocket
+  socket.onopen = function () {
+    socket.send(JSON.stringify(user));
+  };
+
+  // Recevoir la confirmation d'inscription ou l'erreur via WebSocket
+  socket.onmessage = function (event) {
+    var data = JSON.parse(event.data);
+    var type = data.type;
+    var message = data.message;
+
+    if (type === "error") {
+      // C'est un message d'erreur, afficher dans une zone de texte sur la page HTML
+      document.getElementById("errorText").innerText = message;
+      // Masquer l'erreur automatiquement après 15 secondes
+      setTimeout(function () {
+        errorText.innerText = "";
+      }, 15000);
+    } else if (type === "login") {
+      // C'est une notification, afficher la notification de succès
+      showNotification("Enfin te voilà !", message);
+    }
+    socket.close();
+  };
+
+  // Si l'enregistrement est réussi, masquer la div "registrationForm" et afficher la div "home"
+  showDiv("home");
+}
