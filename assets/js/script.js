@@ -1,4 +1,15 @@
-// Vérifier les cookies au chargement de la page
+// Fonction pour obtenir la valeur d'un cookie en fonction de son nom
+function getCookie(name) {
+  var decodedCookie = decodeURIComponent(document.cookie);
+  var cookieArray = decodedCookie.split(";");
+  for (var i = 0; i < cookieArray.length; i++) {
+    var cookie = cookieArray[i].trim();
+    if (cookie.startsWith(name + "=")) {
+      return cookie.substring(name.length + 1);
+    }
+  }
+  return null;
+} // Vérifier les cookies au chargement de la page
 window.onload = function () {
   var username = getCookie("username");
   if (username) {
@@ -6,20 +17,68 @@ window.onload = function () {
     showDiv("home");
     document.querySelector(".home").innerHTML =
       "<h1>Accueil - " + username + "</h1>";
+
+    // Afficher le bouton de déconnexion dans le header
+    document.querySelector("header").innerHTML =
+      '<button onclick="logout()">Déconnexion</button>';
   }
 };
 
+// Fonction pour supprimer un cookie en fonction de son nom
+function deleteCookie(name) {
+  document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+}
+
+// Fonction de déconnexion
+function logout() {
+  // Supprimer les cookies "username" et "session"
+  deleteCookie("username");
+  deleteCookie("session");
+
+  // Rediriger l'utilisateur vers la page d'accueil ou effectuer d'autres actions nécessaires
+  window.location.href = "/";
+}
+
+// Écouter l'événement de soumission du formulaire
+document
+  .getElementById("registrationForm")
+  .addEventListener("submit", function (event) {
+    // Empêcher le comportement de soumission par défaut
+    event.preventDefault();
+
+    // Appeler la fonction registerUser de votre script JavaScript
+    registerUser();
+  });
+
+// Écouter l'événement de soumission du formulaire
+document
+  .getElementById("loginForm")
+  .addEventListener("submit", function (event) {
+    // Empêcher le comportement de soumission par défaut
+    event.preventDefault();
+
+    // Appeler la fonction registerUser de votre script JavaScript
+    loginUser();
+  });
+
 function registerUser() {
+  // Récupérer le formulaire par son ID
+  var registrationForm = document.getElementById("registrationForm");
+
+  // Récupérer les valeurs des champs du formulaire
+  var username = registrationForm.elements["username"].value;
+  var email = registrationForm.elements["email"].value;
+  var password = registrationForm.elements["password"].value;
+  var age = registrationForm.elements["age"].value;
+  var gender = registrationForm.elements["gender"].value;
+  var firstName = registrationForm.elements["firstName"].value;
+  var lastName = registrationForm.elements["lastName"].value;
+
   // Effacer le contenu de la zone de texte d'erreur
   document.getElementById("errorText").innerText = "";
 
-  var username = document.getElementById("username").value;
-  var email = document.getElementById("email").value;
-  var password = document.getElementById("password").value;
-  var age = document.getElementById("age").value;
-  var gender = document.getElementById("gender").value;
-  var firstName = document.getElementById("firstName").value;
-  var lastName = document.getElementById("lastName").value;
+  // Variable pour suivre si une erreur a été rencontrée
+  var isError = 0;
 
   var user = {
     type: "register",
@@ -46,22 +105,94 @@ function registerUser() {
     var type = data.type;
     var message = data.message;
 
+    var errorText = document.getElementById("errorText");
+    var errorMessage = document.getElementById("errorMessage");
+
     if (type === "error") {
-      // C'est un message d'erreur, afficher dans une zone de texte sur la page HTML
-      document.getElementById("errorText").innerText = message;
+      errorMessage.innerText = message;
+      errorText.style.display = "block"; // Afficher la zone de texte d'erreur
       // Masquer l'erreur automatiquement après 15 secondes
+      isError = 1;
       setTimeout(function () {
-        errorText.innerText = "";
+        errorMessage.innerText = "";
+        errorText.style.display = "none"; // Masquer la zone de texte d'erreur
       }, 15000);
     } else if (type === "join") {
       // C'est une notification, afficher la notification de succès
       showNotification("Oh mais qui voilà !", message);
     }
     socket.close();
+
+    // Si l'enregistrement est réussi, masquer la div "registrationForm" et afficher la div "home"
+    if (isError === 0) {
+      showDiv("loginForm");
+    }
+  };
+}
+
+function loginUser() {
+  // Récupérer le formulaire par son ID
+  var loginForm = document.getElementById("loginForm");
+
+  var loginuser = loginForm.elements["loginuser"].value;
+  var loginpassword = loginForm.elements["loginpassword"].value;
+
+  // Effacer le contenu de la zone de texte d'erreur
+  document.getElementById("errorText").innerText = "";
+
+  // Variable pour suivre si une erreur a été rencontrée
+  var isError = 0;
+
+  var user = {
+    type: "login",
+    loginuser: loginuser,
+    loginpassword: loginpassword,
   };
 
-  // Si l'enregistrement est réussi, masquer la div "registrationForm" et afficher la div "home"
-  showDiv("home");
+  // Établir une connexion WebSocket
+  var socket = new WebSocket("ws://" + window.location.host + "/ws");
+
+  // Envoyer les données utilisateur via WebSocket
+  socket.onopen = function () {
+    socket.send(JSON.stringify(user));
+  };
+
+  // Recevoir la confirmation de login ou l'erreur via WebSocket
+  socket.onmessage = function (event) {
+    var data = JSON.parse(event.data);
+    var type = data.type;
+    var message = data.message;
+    var tokenCookie = data.tokenCookie;
+    var usernameCookie = data.usernameCookie;
+
+    var errorTextLogin = document.getElementById("errorTextLogin");
+    var errorMessageLogin = document.getElementById("errorMessageLogin");
+
+    if (type === "error") {
+      errorMessageLogin.innerText = message;
+      errorTextLogin.style.display = "block"; // Afficher la zone de texte d'erreur
+      // Masquer l'erreur automatiquement après 15 secondes
+      isError = 1;
+      setTimeout(function () {
+        errorMessage.innerText = "";
+        errorText.style.display = "none"; // Masquer la zone de texte d'erreur
+      }, 15000);
+    } else if (type === "login") {
+      // Créer un cookie côté client avec le jeton
+      document.cookie = "username=" + usernameCookie + "; path=/";
+      document.cookie = "session=" + tokenCookie + "; path=/";
+
+      // C'est une notification, afficher la notification de succès
+      showNotification("Enfin te voilà !", message);
+    }
+    socket.close();
+
+    // Si l'enregistrement est réussi, masquer la div "registrationForm" et afficher la div "home"
+    if (isError === 0) {
+      window.location.reload();
+      showDiv("home");
+    }
+  };
 }
 
 function showNotification(title, message) {
@@ -117,58 +248,4 @@ function showDiv(divName) {
   if (selectedDiv) {
     selectedDiv.style.display = "block";
   }
-}
-
-// Fonction pour récupérer la valeur d'un cookie
-function getCookie(name) {
-  var match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
-  if (match) {
-    return match[2];
-  }
-  return null;
-}
-
-function loginUser() {
-  // Effacer le contenu de la zone de texte d'erreur
-  document.getElementById("errorText").innerText = "";
-
-  var loginuser = document.getElementById("loginuser").value;
-  var loginpassword = document.getElementById("loginpassword").value;
-
-  var user = {
-    type: "login",
-    loginuser: loginuser,
-    loginpassword: loginpassword,
-  };
-
-  // Établir une connexion WebSocket
-  var socket = new WebSocket("ws://" + window.location.host + "/ws");
-
-  // Envoyer les données utilisateur via WebSocket
-  socket.onopen = function () {
-    socket.send(JSON.stringify(user));
-  };
-
-  // Recevoir la confirmation d'inscription ou l'erreur via WebSocket
-  socket.onmessage = function (event) {
-    var data = JSON.parse(event.data);
-    var type = data.type;
-    var message = data.message;
-
-    if (type === "error") {
-      // C'est un message d'erreur, afficher dans une zone de texte sur la page HTML
-      document.getElementById("errorText").innerText = message;
-      // Masquer l'erreur automatiquement après 15 secondes
-      setTimeout(function () {
-        errorText.innerText = "";
-      }, 15000);
-    } else if (type === "login") {
-      // C'est une notification, afficher la notification de succès
-      showNotification("Enfin te voilà !", message);
-    }
-    socket.close();
-  };
-
-  // Si l'enregistrement est réussi, masquer la div "registrationForm" et afficher la div "home"
-  showDiv("home");
 }
