@@ -94,7 +94,7 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 		if user.Type == "register" {
 			Register(conn, user)
 		} else if user.Type == "login" {
-			Login(w, conn, user)
+			Login(w, r, conn, user)
 		} else {
 			log.Println("Unknown request type:", user.Type)
 		}
@@ -106,23 +106,10 @@ func Register(conn *websocket.Conn, user User) {
 
 	// Vérifier si l'username ou l'adresse email est déjà pris
 	if usernameExists(user.Username) {
-		// Si l'username est déjà pris, envoyer un message d'erreur
-		err := conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "error", "message": "Username déjà pris. Veuillez en choisir un autre."}`))
-		if err != nil {
-			log.Println(err)
-			return
-		}
-
 		Existing = true
 	}
 
 	if emailExists(user.Email) {
-		// Si l'adresse email est déjà prise, envoyer un message d'erreur
-		err := conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "error", "message": "Email déjà utilisé. Veuillez en choisir un autre."}`))
-		if err != nil {
-			log.Println(err)
-			return
-		}
 		Existing = true
 	}
 
@@ -143,11 +130,16 @@ func Register(conn *websocket.Conn, user User) {
 			log.Println(err)
 		}
 	} else {
-		fmt.Println("Error username or email are already taken ! ")
+		// Si l'adresse email est déjà prise, envoyer un message d'erreur
+		err := conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "error", "message": "Email or Username déjà utilisé. Veuillez en choisir un autre."}`))
+		if err != nil {
+			log.Println(err)
+			return
+		}
 	}
 }
 
-func Login(w http.ResponseWriter, conn *websocket.Conn, user User) {
+func Login(w http.ResponseWriter, r *http.Request, conn *websocket.Conn, user User) {
 	loginemail := user.LoginUser
 	loginpassword := user.LoginPassword
 
@@ -155,35 +147,53 @@ func Login(w http.ResponseWriter, conn *websocket.Conn, user User) {
 	var truepassword uint32
 	var username string
 
+	Existing := false
+
 	fmt.Println("1")
 
 	err := db.QueryRow("SELECT username, email, password FROM users WHERE email = ?", loginemail).Scan(&username, &trueemail, &truepassword)
+
 	if err != nil {
-		err = conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "error", "message": Email unknown !"}`))
-		return
-	} else {
+		Existing = true
+	}
+
+	if !Existing {
 		fmt.Println("2")
 		hashloginpassword := hash(loginpassword)
+		wrongPassword := false
 		// Vérifier le mot de passe
 		if hashloginpassword != truepassword {
-			err := conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "error", "message": Password Incorrect !"}`))
-			if err != nil {
-				log.Println(err)
-				return
-			}
-		} else {
-			fmt.Println("3")
+
+			wrongPassword = true
+
+		}
+		if !wrongPassword {
 			// L'utilisateur est connecté avec succès
-			err := CreateAndSetSessionCookies(w, username)
+			usernameCookie, tokenCookie, err := CreateAndSetSessionCookies(w, username)
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
+
 			// Confirmer l'inscription à l'utilisateur via la websocket
-			err = conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "login", "message": "Connexion réussi, `+username+` !"}`))
+			err = conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "login", "message": "Connexion réussi, `+username+` !","usernameCookie": "`+usernameCookie+`","tokenCookie": "`+tokenCookie+`"}`))
 			if err != nil {
 				log.Println(err)
 			}
+		} else {
+			fmt.Println("3")
+			err := conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "error", "message": "Password Incorrect"}`))
+			if err != nil {
+				log.Println(err)
+				return
+			}
+		}
+	} else {
+		fmt.Println("err")
+		err := conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "error", "message": "Email unknown"}`))
+		if err != nil {
+			log.Println(err)
+			return
 		}
 	}
 
@@ -220,91 +230,56 @@ func generateSessionToken() (string, error) {
 	return base64.URLEncoding.EncodeToString(token), nil
 }
 
-func CreateAndSetSessionCookies(w http.ResponseWriter, username string) error {
+func CreateAndSetSessionCookies(w http.ResponseWriter, username string) (string, string, error) {
 	// Générer un nouveau jeton de session uniquement si le nom d'utilisateur n'est pas vide
 	if username == "" {
-		return errors.New("username is empty")
+		return "", "", errors.New("username is empty")
 	}
 
 	// Vérifier si l'utilisateur a déjà une entrée dans la base de données
 	var existingSessionToken string
 	err := db.QueryRow("SELECT sessionToken FROM token_user WHERE username = ?", username).Scan(&existingSessionToken)
+
 	if err == sql.ErrNoRows {
 		// Si l'utilisateur n'a pas encore d'entrée, générer un nouveau jeton de session
 		sessionToken, err := generateSessionToken()
 		if err != nil {
-			return err
+			return "", "", err
 		}
 		// Insérer la nouvelle entrée dans la base de données
 		_, err = db.Exec("INSERT INTO token_user (username, sessionToken) VALUES (?, ?)", username, sessionToken)
 		if err != nil {
-			return err
+			return "", "", err
 		}
-		// Créer un cookie contenant le nom d'utilisateur
-		userCookie := http.Cookie{
-			Name:     "username",
-			Value:    username,
-			Path:     "/",
-			HttpOnly: true,
-			Secure:   true,
-			SameSite: http.SameSiteStrictMode, // ou http.SameSiteLaxMode
-		}
-		http.SetCookie(w, &userCookie)
 
 		encText, err := Encrypt(sessionToken, MySecret)
 		if err != nil {
 			fmt.Println("error encrypting your classified text: ", err)
+			return "", "", err
 		}
 
-		// Créer un cookie contenant le jeton de session
-		sessionCookie := http.Cookie{
-			Name:     "session",
-			Value:    encText,
-			Path:     "/",
-			HttpOnly: true,
-			Secure:   true,
-			SameSite: http.SameSiteStrictMode, // ou http.SameSiteLaxMode
-		}
-		http.SetCookie(w, &sessionCookie)
+		return username, encText, nil //Envoie des valeurs pour la création des cookies en JS
 	} else if err == nil {
 		// Si l'utilisateur a déjà une entrée, mettre à jour le jeton de session existant
 		sessionToken, err := generateSessionToken()
 		if err != nil {
-			return err
+			return "", "", err
 		}
 		// Mettre à jour le jeton de session dans la base de données
 		_, err = db.Exec("UPDATE token_user SET sessionToken = ? WHERE username = ?", sessionToken, username)
 		if err != nil {
-			return err
+			return "", "", err
 		}
-		// Créer un cookie contenant le nom d'utilisateur
-		userCookie := http.Cookie{
-			Name:     "username",
-			Value:    username,
-			Path:     "/",
-			HttpOnly: true,
-			Secure:   true,
-			SameSite: http.SameSiteStrictMode, // ou http.SameSiteLaxMode
-		}
-		http.SetCookie(w, &userCookie)
+
 		encText, err := Encrypt(sessionToken, MySecret)
 		if err != nil {
 			fmt.Println("error encrypting your classified text: ", err)
-		}
-		// Créer un cookie contenant le jeton de session
-		sessionCookie := http.Cookie{
-			Name:     "session",
-			Value:    encText,
-			Path:     "/",
-			HttpOnly: true,
-			Secure:   true,
-			SameSite: http.SameSiteStrictMode, // ou http.SameSiteLaxMode
+			return "", "", err
 		}
 
-		http.SetCookie(w, &sessionCookie)
+		return username, encText, nil //Envoie des valeurs pour la création des cookies en JS
 	} else {
 		// En cas d'erreur différente de "pas de lignes", renvoyer l'erreur
-		return err
+		return "", "", err
 	}
-	return nil
 }
