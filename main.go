@@ -37,7 +37,10 @@ type User struct {
 	Gender        string `json:"gender"`
 	FristName     string `json:"firstName"`
 	LastName      string `json:"lastName"`
-}
+	Title    	  string `json:"title"`
+    Text 	  string `json:"text"`
+    Category 	  string `json:"category"`
+}	
 
 func main() {
 	var err error
@@ -94,8 +97,12 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 			Register(conn, user)
 		} else if user.Type == "login" {
 			Login(w, r, conn, user)
+		} else if user.Type == "createDiscussion"{
+            CreateDiscussionRequest(conn, user, r)
+
 		} else {
 			log.Println("Unknown request type:", user.Type)
+
 		}
 	}
 }
@@ -279,4 +286,31 @@ func CreateAndSetSessionCookies(w http.ResponseWriter, username string) (string,
 		// En cas d'erreur différente de "pas de lignes", renvoyer l'erreur
 		return "", "", err
 	}
+}
+
+func CreateDiscussionRequest(conn *websocket.Conn, user User, r *http.Request) {
+    // Récupérer tous les cookies de la requête
+	usernameCookie, err := r.Cookie("username")
+    if err != nil {
+        log.Println(err)
+        return
+    }
+
+    // Utiliser la valeur du cookie "username"
+    usernameValue := usernameCookie.Value
+    fmt.Println(usernameValue)
+
+	title := user.Title
+    text := user.Text
+    category := user.Category
+
+	fmt.Println(title)
+	fmt.Println(text)
+	fmt.Println(category)
+
+
+
+ 
+
+    // Ajouter ici le reste de votre logique de gestion de la requête
 }

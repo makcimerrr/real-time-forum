@@ -10,12 +10,13 @@ function getCookie(name) {
   }
   return null;
 } // Vérifier les cookies au chargement de la page
+
 window.onload = function () {
   var username = getCookie("username");
   if (username) {
     // Les cookies existent, afficher la div "home" avec le titre de l'username
     showDiv("home");
-    document.querySelector(".home").innerHTML =
+    document.querySelector(".title").innerHTML =
       "<h1>Accueil - " + username + "</h1>";
 
     // Afficher le bouton de déconnexion dans le header
@@ -237,7 +238,7 @@ function generateUniqueToken() {
 function showDiv(divName) {
   // Masquer toutes les divs
   var divs = document.querySelectorAll(
-    ".accueil, .loginForm, .registrationForm, .home"
+    ".accueil, .loginForm, .registrationForm, .home, .creatediscussion"
   );
   divs.forEach(function (div) {
     div.style.display = "none";
@@ -249,3 +250,87 @@ function showDiv(divName) {
     selectedDiv.style.display = "block";
   }
 }
+
+function HideDiv(divName) {
+  // Masquer toutes les divs
+  var divs = document.querySelectorAll(".creatediscussion");
+  divs.forEach(function (div) {
+    div.style.display = "block";
+  });
+
+  // Afficher la div spécifiée
+  var selectedDiv = document.querySelector("." + divName);
+  if (selectedDiv) {
+    selectedDiv.style.display = "none";
+  }
+}
+
+// Écouter l'événement de soumission du formulaire
+document
+  .getElementById("creatediscussion")
+  .addEventListener("submit", function (event) {
+    // Empêcher le comportement de soumission par défaut
+    event.preventDefault();
+
+    // Appeler la fonction registerUser de votre script JavaScript
+    submitDiscussionForm();
+  });
+
+  function submitDiscussionForm() {
+    // Récupérer le formulaire par son ID
+    var discussionForm = document.getElementById("creatediscussion");
+  
+    // Récupérer les valeurs des champs du formulaire
+    var title = discussionForm.elements["title"].value;
+    var text = discussionForm.elements["message"].value;
+    var category = discussionForm.elements["category"].value;
+  
+    console.log(title);
+    console.log(text);
+    console.log(category);
+  
+    // Variable pour suivre si une erreur a été rencontrée
+    var isError = 0;
+  
+    var discussionData = {
+      type: "createDiscussion",
+      title: title,
+      text: text,
+      category: category,
+    };
+  
+    // Établir une connexion WebSocket
+    var socket = new WebSocket("ws://" + window.location.host + "/ws");
+  
+    // Envoyer les données de discussion via WebSocket
+    socket.onopen = function () {
+      socket.send(JSON.stringify(discussionData));
+    };
+  
+    // Gérer les réponses du serveur
+    socket.onmessage = function (event) {
+      var data = JSON.parse(event.data);
+      var type = data.type;
+      var message = data.message;
+  
+      if (type === "error") {
+        // Gérer les erreurs si nécessaire
+        console.error("Error:", message);
+        isError = 1;
+      } else if (type === "createDiscussion") {
+        // C'est une notification, afficher la notification de succès
+        console.log("Discussion Created:", message);
+        showNotification("Discussion Created!", message);
+      }
+  
+      // Fermer la connexion WebSocket
+      socket.close();
+  
+      // Si la création de la discussion est réussie, masquer la div "creatediscussion" et afficher la div "home"
+      if (isError === 0) {
+        window.location.reload();
+        showDiv("home");
+      }
+    };
+  }
+  
