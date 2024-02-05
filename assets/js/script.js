@@ -34,8 +34,9 @@ function deleteCookie(name) {
 
 // Fonction de déconnexion
 function logout() {
-
   var username = getCookie("username");
+
+  isError = 0;
 
   var user = {
     type: "logout",
@@ -50,12 +51,18 @@ function logout() {
     socket.send(JSON.stringify(user));
   };
 
+  socket.onmessage = function (event) {}
+
   // Supprimer les cookies "username" et "session"
   deleteCookie("username");
   deleteCookie("session");
 
-  // Rediriger l'utilisateur vers la page d'accueil ou effectuer d'autres actions nécessaires
-  window.location.href = "/";
+  // Si l'enregistrement est réussi, masquer la div "registrationForm" et afficher la div "home"
+  if (isError === 0) {
+    hideHeader();
+    showDiv("accueil");
+  }
+    
 }
 
 
@@ -286,4 +293,9 @@ function updateOnlineUserList(userListJSON) {
       listItem.textContent = user;
       userListElement.appendChild(listItem);
   });
+}
+
+function hideHeader() {
+  var header = document.querySelector('header');
+  header.style.display = 'none';
 }

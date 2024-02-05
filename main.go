@@ -192,7 +192,7 @@ func Login(w http.ResponseWriter, r *http.Request, conn *websocket.Conn, user Us
 			userList = append(userList, username)
 			userListJoin := strings.Join(userList, ",")
 
-			fmt.Println(userListJoin)
+			fmt.Println(userList)
 
 			// Confirmer l'inscription à l'utilisateur via la websocket
 			err = conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "login","message": "Connexion réussi, `+username+` !","usernameCookie": "`+usernameCookie+`","tokenCookie": "`+tokenCookie+`","userList": "`+userListJoin+`"}`))
@@ -316,4 +316,6 @@ func Logout(conn *websocket.Conn, user User) {
 			i--
 		}
 	}
+
+	fmt.Println(userList)
 }
