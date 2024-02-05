@@ -10,6 +10,8 @@ function getCookie(name) {
   }
   return null;
 } // Vérifier les cookies au chargement de la page
+
+
 window.onload = function () {
   var username = getCookie("username");
   if (username) {
@@ -24,6 +26,7 @@ window.onload = function () {
   }
 };
 
+
 // Fonction pour supprimer un cookie en fonction de son nom
 function deleteCookie(name) {
   document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
@@ -31,6 +34,22 @@ function deleteCookie(name) {
 
 // Fonction de déconnexion
 function logout() {
+
+  var username = getCookie("username");
+
+  var user = {
+    type: "logout",
+    username: username,
+  };
+
+  // Établir une connexion WebSocket
+  var socket = new WebSocket("ws://" + window.location.host + "/ws");
+
+  // Envoyer les données utilisateur via WebSocket
+  socket.onopen = function () {
+    socket.send(JSON.stringify(user));
+  };
+
   // Supprimer les cookies "username" et "session"
   deleteCookie("username");
   deleteCookie("session");
@@ -38,6 +57,7 @@ function logout() {
   // Rediriger l'utilisateur vers la page d'accueil ou effectuer d'autres actions nécessaires
   window.location.href = "/";
 }
+
 
 // Écouter l'événement de soumission du formulaire
 document
@@ -168,6 +188,8 @@ function loginUser() {
     var errorTextLogin = document.getElementById("errorTextLogin");
     var errorMessageLogin = document.getElementById("errorMessageLogin");
 
+
+
     if (type === "error") {
       errorMessageLogin.innerText = message;
       errorTextLogin.style.display = "block"; // Afficher la zone de texte d'erreur
@@ -248,4 +270,20 @@ function showDiv(divName) {
   if (selectedDiv) {
     selectedDiv.style.display = "block";
   }
+}
+
+
+function updateOnlineUserList(userListJSON) {
+  var userList = JSON.parse(userListJSON);
+  var userListElement = document.getElementById("userList");
+
+  // Effacez la liste actuelle
+  userListElement.innerHTML = "";
+
+  // Ajoutez chaque utilisateur à la liste
+  userList.forEach(function (user) {
+      var listItem = document.createElement("li");
+      listItem.textContent = user;
+      userListElement.appendChild(listItem);
+  });
 }

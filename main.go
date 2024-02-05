@@ -18,10 +18,13 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-}
+var (
+	upgrader = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
+	userList []string
+)
 
 // Envoie un message à tous les clients connectés
 var templates = template.Must(template.ParseGlob("templates/*.html"))
@@ -38,6 +41,7 @@ type User struct {
 	Gender        string `json:"gender"`
 	FristName     string `json:"firstName"`
 	LastName      string `json:"lastName"`
+	Message       string `json:"message"`
 }
 
 func main() {
@@ -91,13 +95,16 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if user.Type == "register" {
+		if user.Type == "logout" {
+			Logout(conn, user)
+		} else if user.Type == "register" {
 			Register(conn, user)
 		} else if user.Type == "login" {
 			Login(w, r, conn, user)
 		} else {
 			log.Println("Unknown request type:", user.Type)
 		}
+
 	}
 }
 
@@ -182,13 +189,18 @@ func Login(w http.ResponseWriter, r *http.Request, conn *websocket.Conn, user Us
 				return
 			}
 
+			userList = append(userList, username)
+			userListJoin := strings.Join(userList, ",")
+
+			fmt.Println(userListJoin)
+
 			// Confirmer l'inscription à l'utilisateur via la websocket
-			err = conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "login", "message": "Connexion réussi, `+username+` !","usernameCookie": "`+usernameCookie+`","tokenCookie": "`+tokenCookie+`"}`))
+			err = conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "login","message": "Connexion réussi, `+username+` !","usernameCookie": "`+usernameCookie+`","tokenCookie": "`+tokenCookie+`","userList": "`+userListJoin+`"}`))
 			if err != nil {
 				log.Println(err)
 			}
+
 		} else {
-			fmt.Println("3")
 			err := conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "error", "message": "Password Incorrect"}`))
 			if err != nil {
 				log.Println(err)
@@ -196,7 +208,6 @@ func Login(w http.ResponseWriter, r *http.Request, conn *websocket.Conn, user Us
 			}
 		}
 	} else {
-		fmt.Println("err")
 		err := conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "error", "message": "Email or Username unknown"}`))
 		if err != nil {
 			log.Println(err)
@@ -288,5 +299,21 @@ func CreateAndSetSessionCookies(w http.ResponseWriter, username string) (string,
 	} else {
 		// En cas d'erreur différente de "pas de lignes", renvoyer l'erreur
 		return "", "", err
+	}
+}
+
+func Logout(conn *websocket.Conn, user User) {
+
+	username := user.Username
+
+	// Parcourir le tableau
+	for i := 0; i < len(userList); i++ {
+		// Si l'élément courant correspond à celui que nous voulons supprimer
+		if userList[i] == username {
+			// Supprimer l'élément en utilisant la découpe
+			userList = append(userList[:i], userList[i+1:]...)
+			// Décrémenter la variable de boucle pour éviter de sauter un élément après la suppression
+			i--
+		}
 	}
 }
