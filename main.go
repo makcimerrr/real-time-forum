@@ -9,20 +9,21 @@ import (
 	"hash/fnv"
 	"log"
 	"net/http"
+	"strings"
 	"text/template"
+
+	"realtimeforum/Golang" // Utilisez le chemin du module
 
 	"github.com/gorilla/websocket"
 	_ "modernc.org/sqlite"
-    "realtimeforum/Golang" // Utilisez le chemin du module
 )
 
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
 
-	var upgrader = websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
-	}
-
-
+// Envoie un message à tous les clients connectés
 var templates = template.Must(template.ParseGlob("templates/*.html"))
 var db *sql.DB
 
@@ -139,7 +140,7 @@ func Register(conn *websocket.Conn, user User) {
 }
 
 func Login(w http.ResponseWriter, r *http.Request, conn *websocket.Conn, user User) {
-	loginemail := user.LoginUser
+	loginuser := user.LoginUser
 	loginpassword := user.LoginPassword
 
 	var trueemail string
@@ -148,11 +149,20 @@ func Login(w http.ResponseWriter, r *http.Request, conn *websocket.Conn, user Us
 
 	Existing := false
 
+	if strings.Contains(loginuser, "@") {
 
-	err := db.QueryRow("SELECT username, email, password FROM users WHERE email = ?", loginemail).Scan(&username, &trueemail, &truepassword)
+		loginemail := loginuser
 
-	if err != nil {
-		Existing = true
+		err := db.QueryRow("SELECT username, email, password FROM users WHERE email = ?", loginemail).Scan(&username, &trueemail, &truepassword)
+
+		if err != nil {
+			Existing = true
+		}
+	} else {
+		err := db.QueryRow("SELECT username, email, password FROM users WHERE username = ?", loginuser).Scan(&username, &trueemail, &truepassword)
+		if err != nil {
+			Existing = true
+		}
 	}
 
 	if !Existing {
@@ -187,7 +197,7 @@ func Login(w http.ResponseWriter, r *http.Request, conn *websocket.Conn, user Us
 		}
 	} else {
 		fmt.Println("err")
-		err := conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "error", "message": "Email unknown"}`))
+		err := conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "error", "message": "Email or Username unknown"}`))
 		if err != nil {
 			log.Println(err)
 			return
@@ -249,7 +259,7 @@ func CreateAndSetSessionCookies(w http.ResponseWriter, username string) (string,
 			return "", "", err
 		}
 
-		encText, err := Golang.Encrypt(sessionToken,Golang.MySecret)
+		encText, err := Golang.Encrypt(sessionToken, Golang.MySecret)
 		if err != nil {
 			fmt.Println("error encrypting your classified text: ", err)
 			return "", "", err
