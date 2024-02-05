@@ -13,16 +13,15 @@ import (
 
 	"github.com/gorilla/websocket"
 	_ "modernc.org/sqlite"
+    "realtimeforum/Golang" // Utilisez le chemin du module
 )
 
-var (
-	//clients = make(map[*websocket.Conn]bool) // Map pour stocker les connexions des clients
 
-	upgrader = websocket.Upgrader{
+	var upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	}
-)
+
 
 var templates = template.Must(template.ParseGlob("templates/*.html"))
 var db *sql.DB
@@ -149,7 +148,6 @@ func Login(w http.ResponseWriter, r *http.Request, conn *websocket.Conn, user Us
 
 	Existing := false
 
-	fmt.Println("1")
 
 	err := db.QueryRow("SELECT username, email, password FROM users WHERE email = ?", loginemail).Scan(&username, &trueemail, &truepassword)
 
@@ -158,7 +156,6 @@ func Login(w http.ResponseWriter, r *http.Request, conn *websocket.Conn, user Us
 	}
 
 	if !Existing {
-		fmt.Println("2")
 		hashloginpassword := hash(loginpassword)
 		wrongPassword := false
 		// Vérifier le mot de passe
@@ -252,7 +249,7 @@ func CreateAndSetSessionCookies(w http.ResponseWriter, username string) (string,
 			return "", "", err
 		}
 
-		encText, err := Encrypt(sessionToken, MySecret)
+		encText, err := Golang.Encrypt(sessionToken,Golang.MySecret)
 		if err != nil {
 			fmt.Println("error encrypting your classified text: ", err)
 			return "", "", err
@@ -271,7 +268,7 @@ func CreateAndSetSessionCookies(w http.ResponseWriter, username string) (string,
 			return "", "", err
 		}
 
-		encText, err := Encrypt(sessionToken, MySecret)
+		encText, err := Golang.Encrypt(sessionToken, Golang.MySecret)
 		if err != nil {
 			fmt.Println("error encrypting your classified text: ", err)
 			return "", "", err
