@@ -1,20 +1,4 @@
-// Fonction pour obtenir la valeur d'un cookie en fonction de son nom
-function getCookie(name) {
-  var decodedCookie = decodeURIComponent(document.cookie);
-  var cookieArray = decodedCookie.split(";");
-  for (var i = 0; i < cookieArray.length; i++) {
-    var cookie = cookieArray[i].trim();
-    if (cookie.startsWith(name + "=")) {
-      return cookie.substring(name.length + 1);
-    }
-  }
-  return null;
-} // Vérifier les cookies au chargement de la page
-
-
 window.onload = function () {
-  var userListString = ""
-  displayUserList(userListString)
   var username = getCookie("username");
   if (username) {
     // Les cookies existent, afficher la div "home" avec le titre de l'username
@@ -28,168 +12,54 @@ window.onload = function () {
   }
 };
 
+var socket; // Déclarer la variable socket en dehors de la fonction connectWebSocket
 
-// Fonction pour supprimer un cookie en fonction de son nom
-function deleteCookie(name) {
-  document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-}
+// Fonction pour établir une connexion WebSocket
+function connectWebSocket() {
+    // Établir la connexion WebSocket seulement si elle n'est pas déjà ouverte
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+        socket = new WebSocket("ws://" + window.location.host + "/ws");
 
-// Fonction de déconnexion
-function logout() {
-  var username = getCookie("username");
+        socket.onopen = function () {
+            console.log("WebSocket connection established");
+        };
 
-  isError = 0;
+        socket.onmessage = function (event) {
+            var data = JSON.parse(event.data);
+            var type = data.type;
+            var message = data.message;
+            var userList = data.userList;
 
-  var user = {
-    type: "logout",
-    username: username,
-  };
+            // Gérer les différentes réponses du serveur WebSocket
+            if (type === "error") {
+                // Afficher l'erreur dans la zone de texte d'erreur
+                var errorMessageLogin = document.getElementById("errorMessageLogin");
+                errorMessageLogin.innerText = message;
+                errorMessageLogin.style.display = "block"; // Afficher la zone de texte d'erreur
+            } else if (type === "login") {
+                // Traitement réussi du login, mettre en œuvre les actions nécessaires
+                console.log("Login successful");
+                console.log(userList); // Mettre à jour la liste des utilisateurs par exemple
+            }
+        };
 
-  // Établir une connexion WebSocket
-  var socket = new WebSocket("ws://" + window.location.host + "/ws");
-
-  // Envoyer les données utilisateur via WebSocket
-  socket.onopen = function () {
-    socket.send(JSON.stringify(user));
-  };
-
-  socket.onmessage = function (event) {
-    var data = JSON.parse(event.data);
-    var type = data.type;
-    var message = data.message;
-    var userList = data.userList;
-
-    if (type === "error") {
-      isError = 1;
-      // C'est une notification, afficher la notification d'erreur
-      showNotification("Oups !", message);
-    } else if (type === "logout") {
-
-      console.log(userList)
-      // Mettre à jour la liste des utilisateurs affichée
-      displayUserList(userList);
-
-
-      // C'est une notification, afficher la notification de déconnexion
-      showNotification("Oh vraiment ?", message);
-
-
-      // Supprimer les cookies "username" et "session"
-      deleteCookie("username");
-      deleteCookie("session");
+        socket.onclose = function (event) {
+            console.log("WebSocket connection closed:", event);
+        };
     }
-
-    socket.close();
-
-    // Si l'enregistrement est déséliminé, masquer la div "registrationForm" et afficher la div "home"
-    if (isError === 0) {
-      hideHeader();
-      showDiv("accueil");
-    }
-  }
 }
 
 
-// Écouter l'événement de soumission du formulaire
-document
-  .getElementById("registrationForm")
-  .addEventListener("submit", function (event) {
-    // Empêcher le comportement de soumission par défaut
-    event.preventDefault();
 
-    // Appeler la fonction registerUser de votre script JavaScript
-    registerUser();
-  });
-
-// Écouter l'événement de soumission du formulaire
-document
-  .getElementById("loginForm")
-  .addEventListener("submit", function (event) {
-    // Empêcher le comportement de soumission par défaut
-    event.preventDefault();
-
-    // Appeler la fonction registerUser de votre script JavaScript
-    loginUser();
-  });
-
-function registerUser() {
-  // Récupérer le formulaire par son ID
-  var registrationForm = document.getElementById("registrationForm");
-
-  // Récupérer les valeurs des champs du formulaire
-  var username = registrationForm.elements["username"].value;
-  var email = registrationForm.elements["email"].value;
-  var password = registrationForm.elements["password"].value;
-  var age = registrationForm.elements["age"].value;
-  var gender = registrationForm.elements["gender"].value;
-  var firstName = registrationForm.elements["firstName"].value;
-  var lastName = registrationForm.elements["lastName"].value;
-
-  // Effacer le contenu de la zone de texte d'erreur
-  document.getElementById("errorText").innerText = "";
-
-  // Variable pour suivre si une erreur a été rencontrée
-  var isError = 0;
-
-  var user = {
-    type: "register",
-    username: username,
-    age: age,
-    gender: gender,
-    firstName: firstName,
-    lastName: lastName,
-    email: email,
-    password: password,
-  };
-
-  // Établir une connexion WebSocket
-  var socket = new WebSocket("ws://" + window.location.host + "/ws");
-
-  // Envoyer les données utilisateur via WebSocket
-  socket.onopen = function () {
-    socket.send(JSON.stringify(user));
-  };
-
-  // Recevoir la confirmation d'inscription ou l'erreur via WebSocket
-  socket.onmessage = function (event) {
-    var data = JSON.parse(event.data);
-    var type = data.type;
-    var message = data.message;
-
-    var errorText = document.getElementById("errorText");
-    var errorMessage = document.getElementById("errorMessage");
-
-    if (type === "error") {
-      errorMessage.innerText = message;
-      errorText.style.display = "block"; // Afficher la zone de texte d'erreur
-      // Masquer l'erreur automatiquement après 15 secondes
-      isError = 1;
-      setTimeout(function () {
-        errorMessage.innerText = "";
-        errorText.style.display = "none"; // Masquer la zone de texte d'erreur
-      }, 15000);
-    } else if (type === "join") {
-      // C'est une notification, afficher la notification de succès
-      showNotification("Oh mais qui voilà !", message);
-    }
-    socket.close();
-
-    // Si l'enregistrement est réussi, masquer la div "registrationForm" et afficher la div "home"
-    if (isError === 0) {
-      showDiv("loginForm");
-    }
-  };
-}
-
+// Fonction pour gérer la connexion de l'utilisateur// Fonction pour gérer la connexion de l'utilisateur
 function loginUser() {
   // Récupérer le formulaire par son ID
   var loginForm = document.getElementById("loginForm");
-
   var loginuser = loginForm.elements["loginuser"].value;
   var loginpassword = loginForm.elements["loginpassword"].value;
 
   // Effacer le contenu de la zone de texte d'erreur
-  document.getElementById("errorText").innerText = "";
+  document.getElementById("errorTextLogin").innerText = "";
 
   // Variable pour suivre si une erreur a été rencontrée
   var isError = 0;
@@ -200,169 +70,13 @@ function loginUser() {
     loginpassword: loginpassword,
   };
 
-  // Établir une connexion WebSocket
-  var socket = new WebSocket("ws://" + window.location.host + "/ws");
+  // Appeler la fonction pour établir une connexion WebSocket
+  connectWebSocket();
 
   // Envoyer les données utilisateur via WebSocket
-  socket.onopen = function () {
+  if (socket.readyState === WebSocket.OPEN) {
     socket.send(JSON.stringify(user));
-  };
-
-  // Recevoir la confirmation de login ou l'erreur via WebSocket
-  socket.onmessage = function (event) {
-    var data = JSON.parse(event.data);
-    var type = data.type;
-    var message = data.message;
-    var tokenCookie = data.tokenCookie;
-    var usernameCookie = data.usernameCookie;
-    var userList = data.userList;
-
-    var errorTextLogin = document.getElementById("errorTextLogin");
-    var errorMessageLogin = document.getElementById("errorMessageLogin");
-
-
-
-    if (type === "error") {
-      errorMessageLogin.innerText = message;
-      errorTextLogin.style.display = "block"; // Afficher la zone de texte d'erreur
-      // Masquer l'erreur automatiquement après 15 secondes
-      isError = 1;
-      setTimeout(function () {
-        errorMessage.innerText = "";
-        errorText.style.display = "none"; // Masquer la zone de texte d'erreur
-      }, 15000);
-    } else if (type === "login") {
-
-      console.log(userList)
-
-      // Mettre à jour la liste des utilisateurs affichée
-      displayUserList(userList);
-
-      // Créer un cookie côté client avec le jeton
-      document.cookie = "username=" + usernameCookie + "; path=/";
-      document.cookie = "session=" + tokenCookie + "; path=/";
-
-      // C'est une notification, afficher la notification de succès
-      showNotification("Enfin te voilà !", message);
-    }
-    socket.close();
-
-    // Si l'enregistrement est réussi, masquer la div "registrationForm" et afficher la div "home"
-    if (isError === 0) {
-      window.location.reload();
-      showDiv("home");
-    }
-  };
-}
-
-function showNotification(title, message) {
-  // Vérifier si le navigateur prend en charge les notifications
-  if ("Notification" in window) {
-    // Vérifier si les notifications sont autorisées, sinon demander la permission
-    if (Notification.permission === "granted") {
-      // Afficher la notification
-      new Notification(title, { body: message });
-    } else if (Notification.permission !== "denied") {
-      Notification.requestPermission().then(function (permission) {
-        // Si la permission est accordée, afficher la notification
-        if (permission === "granted") {
-          new Notification(title, { body: message });
-        }
-      });
-    }
+  } else {
+    console.log("WebSocket connection not open");
   }
 }
-
-function generateUniqueToken() {
-  var crypto = window.crypto || window.msCrypto; // Utilise window.crypto pour les navigateurs modernes et window.msCrypto pour les anciens IE
-  if (!crypto) {
-    console.error(
-      "La génération de token n'est pas prise en charge dans ce navigateur."
-    );
-    return null;
-  }
-
-  var token = new Uint8Array(32);
-  crypto.getRandomValues(token);
-
-  var base64Token = btoa(String.fromCharCode.apply(null, token));
-  base64Token = base64Token
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, ""); // Encodage URL-safe
-
-  return base64Token;
-}
-
-function showDiv(divName) {
-  // Masquer toutes les divs
-  var divs = document.querySelectorAll(
-    ".accueil, .loginForm, .registrationForm, .home"
-  );
-  divs.forEach(function (div) {
-    div.style.display = "none";
-  });
-
-  // Afficher la div spécifiée
-  var selectedDiv = document.querySelector("." + divName);
-  if (selectedDiv) {
-    selectedDiv.style.display = "block";
-  }
-}
-
-
-function updateOnlineUserList(userListJSON) {
-  var userList = JSON.parse(userListJSON);
-  var userListElement = document.getElementById("userList");
-
-  // Effacez la liste actuelle
-  userListElement.innerHTML = "";
-
-  // Ajoutez chaque utilisateur à la liste
-  userList.forEach(function (user) {
-    var listItem = document.createElement("li");
-    listItem.textContent = user;
-    userListElement.appendChild(listItem);
-  });
-}
-
-function hideHeader() {
-  var header = document.querySelector('header');
-  header.style.display = 'none';
-}
-
-// Fonction pour afficher la liste des utilisateurs
-function displayUserList(userListString) {
-  // Récupérer la div où afficher la liste des utilisateurs
-  var userListDiv = document.getElementById("userList");
-
-  // Vérifier si userListDiv est défini
-  if (userListDiv) {
-    // Effacer le contenu précédent de la div
-    userListDiv.innerHTML = "";
-
-    // Vérifier si userListString est défini et non vide
-    if (userListString && userListString.trim() !== "") {
-      // Diviser la chaîne en un tableau de noms d'utilisateur
-      var userList = userListString.split(",");
-
-      // Créer une liste non ordonnée pour afficher les utilisateurs
-      var ul = document.createElement("ul");
-
-      // Parcourir la liste des utilisateurs et créer des éléments de liste pour chacun
-      userList.forEach(function(username) {
-        var li = document.createElement("li");
-        li.textContent = username.trim(); // Supprimer les espaces vides autour du nom d'utilisateur
-        ul.appendChild(li);
-      });
-
-      // Ajouter la liste des utilisateurs à la div userListDiv
-      userListDiv.appendChild(ul);
-    } else {
-      // Si la chaîne est vide, afficher un message indiquant qu'aucun utilisateur n'est connecté
-      userListDiv.textContent = "No users are connected.";
-    }
-  }
-}
-
-

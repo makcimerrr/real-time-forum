@@ -1,10 +1,8 @@
 package main
 
 import (
-	"crypto/rand"
 	"database/sql"
-	"encoding/base64"
-	"errors"
+	"encoding/json"
 	"fmt"
 	"hash/fnv"
 	"log"
@@ -12,7 +10,7 @@ import (
 	"strings"
 	"text/template"
 
-	"realtimeforum/Golang" // Utilisez le chemin du module
+	// Utilisez le chemin du module
 
 	"github.com/gorilla/websocket"
 	_ "modernc.org/sqlite"
@@ -30,18 +28,10 @@ var (
 var templates = template.Must(template.ParseGlob("templates/*.html"))
 var db *sql.DB
 
-type User struct {
-	Type          string `json:"type"` // Type de l'opération (register ou login)
-	Username      string `json:"username"`
-	LoginUser     string `json:"loginuser"`
-	LoginPassword string `json:"loginpassword"`
-	Email         string `json:"email"`
-	Password      string `json:"password"`
-	Age           string `json:"age"`
-	Gender        string `json:"gender"`
-	FristName     string `json:"firstName"`
-	LastName      string `json:"lastName"`
-	Message       string `json:"message"`
+// Parser les données JSON de la requête
+var Loginuser struct {
+	LoginData     string `json:"logindata"`
+	Loginpassword string `json:"loginpassword"`
 }
 
 func main() {
@@ -54,6 +44,7 @@ func main() {
 
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/ws", websocketHandler)
+	http.HandleFunc("/login", LoginHandler)
 
 	// Définir le dossier "static" comme dossier de fichiers statiques
 	fs := http.FileServer(http.Dir("assets"))
@@ -73,12 +64,6 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func hash(s string) uint32 {
-	h := fnv.New32a()
-	h.Write([]byte(s))
-	return h.Sum32()
-}
-
 func websocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -87,85 +72,49 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
+	// Attendre les messages du client
 	for {
-		var user User
-		err := conn.ReadJSON(&user)
+		// Lire le message du client
+		_, msg, err := conn.ReadMessage()
 		if err != nil {
 			log.Println(err)
-			return
+			break
 		}
-
-		if user.Type == "logout" {
-			Logout(r, conn, user)
-		} else if user.Type == "register" {
-			Register(conn, user)
-		} else if user.Type == "login" {
-			Login(w, r, conn, user)
-		} else {
-			log.Println("Unknown request type:", user.Type)
-		}
-
+		log.Printf("Message reçu: %s\n", msg)
 	}
 }
 
-func Register(conn *websocket.Conn, user User) {
-	Existing := false
-
-	// Vérifier si l'username ou l'adresse email est déjà pris
-	if usernameExists(user.Username) {
-		Existing = true
-	}
-
-	if emailExists(user.Email) {
-		Existing = true
-	}
-
-	if !Existing {
-		hashpass := hash(user.Password)
-
-		// Si tout est OK, insérer les données dans la base de données
-		_, err := db.Exec("INSERT INTO users (username, email, password, age, gender, first_name, last_name) VALUES (?, ?, ?, ?, ?, ?, ?)",
-			user.Username, user.Email, hashpass, user.Age, user.Gender, user.FristName, user.LastName)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-
-		// Confirmer l'inscription à l'utilisateur via la websocket
-		err = conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "join", "message": "Bienvenue, `+user.Username+` !"}`))
-		if err != nil {
-			log.Println(err)
-		}
-	} else {
-		// Si l'adresse email est déjà prise, envoyer un message d'erreur
-		err := conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "error", "message": "Email or Username déjà utilisé. Veuillez en choisir un autre."}`))
-		if err != nil {
-			log.Println(err)
-			return
-		}
-	}
+func hash(s string) uint32 {
+	h := fnv.New32a()
+	h.Write([]byte(s))
+	return h.Sum32()
 }
 
-func Login(w http.ResponseWriter, r *http.Request, conn *websocket.Conn, user User) {
-	loginuser := user.LoginUser
-	loginpassword := user.LoginPassword
-
+// LoginHandler gère la requête de connexion
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var trueemail string
 	var truepassword uint32
 	var username string
+	var Existing bool
+	// Vérifier si la méthode de requête est POST
+	if r.Method != "POST" {
+		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+		return
+	}
 
-	Existing := false
+	if err := json.NewDecoder(r.Body).Decode(&Loginuser); err != nil {
+		http.Error(w, "Erreur lors de la lecture du corps de la requête", http.StatusBadRequest)
+		return
+	}
 
-	if strings.Contains(loginuser, "@") {
-
-		loginemail := loginuser
-
+	if strings.Contains(Loginuser.LoginData, "@") {
+		loginemail := Loginuser.LoginData
 		err := db.QueryRow("SELECT username, email, password FROM users WHERE email = ?", loginemail).Scan(&username, &trueemail, &truepassword)
-
 		if err != nil {
 			Existing = true
 		}
 	} else {
+		loginuser := Loginuser.LoginData
 		err := db.QueryRow("SELECT username, email, password FROM users WHERE username = ?", loginuser).Scan(&username, &trueemail, &truepassword)
 		if err != nil {
 			Existing = true
@@ -173,172 +122,40 @@ func Login(w http.ResponseWriter, r *http.Request, conn *websocket.Conn, user Us
 	}
 
 	if !Existing {
+		loginpassword := Loginuser.Loginpassword
 		hashloginpassword := hash(loginpassword)
 		wrongPassword := false
 		// Vérifier le mot de passe
 		if hashloginpassword != truepassword {
-
 			wrongPassword = true
-
 		}
 		if !wrongPassword {
-			// L'utilisateur est connecté avec succès
-			usernameCookie, tokenCookie, err := CreateAndSetSessionCookies(w, username)
-			if err != nil {
-				fmt.Println(err)
-				return
+			// Authentification réussie, renvoyer une réponse avec un statut 200 (OK)
+			response := map[string]interface{}{
+				"status":  "success",
+				"message": "Connexion réussie",
 			}
-
-			userList = append(userList, username)
-			userListJoin := strings.Join(userList, ",")
-
-			fmt.Println(userList)
-
-			// Confirmer l'inscription à l'utilisateur via la websocket
-			err = conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "login","message": "Connexion de `+username+` !","usernameCookie": "`+usernameCookie+`","tokenCookie": "`+tokenCookie+`","userList": "`+userListJoin+`"}`))
-			if err != nil {
-				log.Println(err)
-			}
-
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(response)
 		} else {
-			err := conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "error", "message": "Password Incorrect"}`))
-			if err != nil {
-				log.Println(err)
-				return
+			// Authentification échouée, renvoyer une réponse avec un statut 401 (Unauthorized)
+			response := map[string]interface{}{
+				"status":  "error",
+				"message": "Mot de passe incorrect",
 			}
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(response)
 		}
 	} else {
-		err := conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "error", "message": "Email or Username unknown"}`))
-		if err != nil {
-			log.Println(err)
-			return
+		// Authentification échouée, renvoyer une réponse avec un statut 401 (Unauthorized)
+		response := map[string]interface{}{
+			"status":  "error",
+			"message": "Nom d'utilisateur ou email incorrect",
 		}
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
 	}
 
-}
-
-func usernameExists(username string) bool {
-	// Vérifier si l'username existe dans la base de données
-	var count int
-	err := db.QueryRow("SELECT COUNT(*) FROM users WHERE username = ?", username).Scan(&count)
-	if err != nil {
-		log.Println(err)
-		return false
-	}
-	return count > 0
-}
-
-func emailExists(email string) bool {
-	// Vérifier si l'adresse email existe dans la base de données
-	var count int
-	err := db.QueryRow("SELECT COUNT(*) FROM users WHERE email = ?", email).Scan(&count)
-	if err != nil {
-		log.Println(err)
-		return false
-	}
-	return count > 0
-}
-
-func generateSessionToken() (string, error) {
-	token := make([]byte, 32) // Crée un slice de bytes de 32 octets
-	_, err := rand.Read(token)
-	if err != nil {
-		return "", err
-	}
-	return base64.URLEncoding.EncodeToString(token), nil
-}
-
-func CreateAndSetSessionCookies(w http.ResponseWriter, username string) (string, string, error) {
-	// Générer un nouveau jeton de session uniquement si le nom d'utilisateur n'est pas vide
-	if username == "" {
-		return "", "", errors.New("username is empty")
-	}
-
-	// Vérifier si l'utilisateur a déjà une entrée dans la base de données
-	var existingSessionToken string
-	err := db.QueryRow("SELECT sessionToken FROM token_user WHERE username = ?", username).Scan(&existingSessionToken)
-
-	if err == sql.ErrNoRows {
-		// Si l'utilisateur n'a pas encore d'entrée, générer un nouveau jeton de session
-		sessionToken, err := generateSessionToken()
-		if err != nil {
-			return "", "", err
-		}
-		// Insérer la nouvelle entrée dans la base de données
-		_, err = db.Exec("INSERT INTO token_user (username, sessionToken) VALUES (?, ?)", username, sessionToken)
-		if err != nil {
-			return "", "", err
-		}
-
-		encText, err := Golang.Encrypt(sessionToken, Golang.MySecret)
-		if err != nil {
-			fmt.Println("error encrypting your classified text: ", err)
-			return "", "", err
-		}
-
-		return username, encText, nil //Envoie des valeurs pour la création des cookies en JS
-	} else if err == nil {
-		// Si l'utilisateur a déjà une entrée, mettre à jour le jeton de session existant
-		sessionToken, err := generateSessionToken()
-		if err != nil {
-			return "", "", err
-		}
-		// Mettre à jour le jeton de session dans la base de données
-		_, err = db.Exec("UPDATE token_user SET sessionToken = ? WHERE username = ?", sessionToken, username)
-		if err != nil {
-			return "", "", err
-		}
-
-		encText, err := Golang.Encrypt(sessionToken, Golang.MySecret)
-		if err != nil {
-			fmt.Println("error encrypting your classified text: ", err)
-			return "", "", err
-		}
-
-		return username, encText, nil //Envoie des valeurs pour la création des cookies en JS
-	} else {
-		// En cas d'erreur différente de "pas de lignes", renvoyer l'erreur
-		return "", "", err
-	}
-}
-
-func Logout(r *http.Request, conn *websocket.Conn, user User) {
-
-	var err error
-
-	username := user.Username // Recherche du username dans l'objet User
-
-	Existing := false
-
-	if username == "" {
-		Existing = true
-	}
-
-	if !Existing {
-		// Parcourir le tableau
-		for i := 0; i < len(userList); i++ {
-			// Si l'élément courant correspond à celui que nous voulons supprimer
-			if userList[i] == username {
-				// Supprimer l'élément en utilisant la découpe
-				userList = append(userList[:i], userList[i+1:]...)
-				// Décrémenter la variable de boucle pour éviter de sauter un élément après la suppression
-				i--
-			}
-		}
-
-		userListJoin := strings.Join(userList, ",")
-
-		// Confirmer l'inscription à l'utilisateur via la websocket
-		err = conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "logout","message":"Déconnexion de `+username+` !","userList": "`+userListJoin+`"}`))
-		if err != nil {
-			log.Println(err)
-			return
-		}
-	} else {
-		err := conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "error", "message": "Vous devez vous connecter pour vous deconnecter !"}`))
-		if err != nil {
-			log.Println(err)
-			return
-		}
-	}
 }
