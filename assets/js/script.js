@@ -13,6 +13,8 @@ function getCookie(name) {
 
 
 window.onload = function () {
+  var userListString = ""
+  displayUserList(userListString)
   var username = getCookie("username");
   if (username) {
     // Les cookies existent, afficher la div "home" avec le titre de l'username
@@ -51,18 +53,40 @@ function logout() {
     socket.send(JSON.stringify(user));
   };
 
-  socket.onmessage = function (event) {}
+  socket.onmessage = function (event) {
+    var data = JSON.parse(event.data);
+    var type = data.type;
+    var message = data.message;
+    var userList = data.userList;
 
-  // Supprimer les cookies "username" et "session"
-  deleteCookie("username");
-  deleteCookie("session");
+    if (type === "error") {
+      isError = 1;
+      // C'est une notification, afficher la notification d'erreur
+      showNotification("Oups !", message);
+    } else if (type === "logout") {
 
-  // Si l'enregistrement est réussi, masquer la div "registrationForm" et afficher la div "home"
-  if (isError === 0) {
-    hideHeader();
-    showDiv("accueil");
+      console.log(userList)
+      // Mettre à jour la liste des utilisateurs affichée
+      displayUserList(userList);
+
+
+      // C'est une notification, afficher la notification de déconnexion
+      showNotification("Oh vraiment ?", message);
+
+
+      // Supprimer les cookies "username" et "session"
+      deleteCookie("username");
+      deleteCookie("session");
+    }
+
+    socket.close();
+
+    // Si l'enregistrement est déséliminé, masquer la div "registrationForm" et afficher la div "home"
+    if (isError === 0) {
+      hideHeader();
+      showDiv("accueil");
+    }
   }
-    
 }
 
 
@@ -191,6 +215,7 @@ function loginUser() {
     var message = data.message;
     var tokenCookie = data.tokenCookie;
     var usernameCookie = data.usernameCookie;
+    var userList = data.userList;
 
     var errorTextLogin = document.getElementById("errorTextLogin");
     var errorMessageLogin = document.getElementById("errorMessageLogin");
@@ -207,6 +232,12 @@ function loginUser() {
         errorText.style.display = "none"; // Masquer la zone de texte d'erreur
       }, 15000);
     } else if (type === "login") {
+
+      console.log(userList)
+
+      // Mettre à jour la liste des utilisateurs affichée
+      displayUserList(userList);
+
       // Créer un cookie côté client avec le jeton
       document.cookie = "username=" + usernameCookie + "; path=/";
       document.cookie = "session=" + tokenCookie + "; path=/";
@@ -289,9 +320,9 @@ function updateOnlineUserList(userListJSON) {
 
   // Ajoutez chaque utilisateur à la liste
   userList.forEach(function (user) {
-      var listItem = document.createElement("li");
-      listItem.textContent = user;
-      userListElement.appendChild(listItem);
+    var listItem = document.createElement("li");
+    listItem.textContent = user;
+    userListElement.appendChild(listItem);
   });
 }
 
@@ -299,3 +330,39 @@ function hideHeader() {
   var header = document.querySelector('header');
   header.style.display = 'none';
 }
+
+// Fonction pour afficher la liste des utilisateurs
+function displayUserList(userListString) {
+  // Récupérer la div où afficher la liste des utilisateurs
+  var userListDiv = document.getElementById("userList");
+
+  // Vérifier si userListDiv est défini
+  if (userListDiv) {
+    // Effacer le contenu précédent de la div
+    userListDiv.innerHTML = "";
+
+    // Vérifier si userListString est défini et non vide
+    if (userListString && userListString.trim() !== "") {
+      // Diviser la chaîne en un tableau de noms d'utilisateur
+      var userList = userListString.split(",");
+
+      // Créer une liste non ordonnée pour afficher les utilisateurs
+      var ul = document.createElement("ul");
+
+      // Parcourir la liste des utilisateurs et créer des éléments de liste pour chacun
+      userList.forEach(function(username) {
+        var li = document.createElement("li");
+        li.textContent = username.trim(); // Supprimer les espaces vides autour du nom d'utilisateur
+        ul.appendChild(li);
+      });
+
+      // Ajouter la liste des utilisateurs à la div userListDiv
+      userListDiv.appendChild(ul);
+    } else {
+      // Si la chaîne est vide, afficher un message indiquant qu'aucun utilisateur n'est connecté
+      userListDiv.textContent = "No users are connected.";
+    }
+  }
+}
+
+

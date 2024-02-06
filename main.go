@@ -96,7 +96,7 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if user.Type == "logout" {
-			Logout(conn, user)
+			Logout(r, conn, user)
 		} else if user.Type == "register" {
 			Register(conn, user)
 		} else if user.Type == "login" {
@@ -195,7 +195,7 @@ func Login(w http.ResponseWriter, r *http.Request, conn *websocket.Conn, user Us
 			fmt.Println(userList)
 
 			// Confirmer l'inscription à l'utilisateur via la websocket
-			err = conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "login","message": "Connexion réussi, `+username+` !","usernameCookie": "`+usernameCookie+`","tokenCookie": "`+tokenCookie+`","userList": "`+userListJoin+`"}`))
+			err = conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "login","message": "Connexion de `+username+` !","usernameCookie": "`+usernameCookie+`","tokenCookie": "`+tokenCookie+`","userList": "`+userListJoin+`"}`))
 			if err != nil {
 				log.Println(err)
 			}
@@ -302,20 +302,43 @@ func CreateAndSetSessionCookies(w http.ResponseWriter, username string) (string,
 	}
 }
 
-func Logout(conn *websocket.Conn, user User) {
+func Logout(r *http.Request, conn *websocket.Conn, user User) {
 
-	username := user.Username
+	var err error
 
-	// Parcourir le tableau
-	for i := 0; i < len(userList); i++ {
-		// Si l'élément courant correspond à celui que nous voulons supprimer
-		if userList[i] == username {
-			// Supprimer l'élément en utilisant la découpe
-			userList = append(userList[:i], userList[i+1:]...)
-			// Décrémenter la variable de boucle pour éviter de sauter un élément après la suppression
-			i--
-		}
+	username := user.Username // Recherche du username dans l'objet User
+
+	Existing := false
+
+	if username == "" {
+		Existing = true
 	}
 
-	fmt.Println(userList)
+	if !Existing {
+		// Parcourir le tableau
+		for i := 0; i < len(userList); i++ {
+			// Si l'élément courant correspond à celui que nous voulons supprimer
+			if userList[i] == username {
+				// Supprimer l'élément en utilisant la découpe
+				userList = append(userList[:i], userList[i+1:]...)
+				// Décrémenter la variable de boucle pour éviter de sauter un élément après la suppression
+				i--
+			}
+		}
+
+		userListJoin := strings.Join(userList, ",")
+
+		// Confirmer l'inscription à l'utilisateur via la websocket
+		err = conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "logout","message":"Déconnexion de `+username+` !","userList": "`+userListJoin+`"}`))
+		if err != nil {
+			log.Println(err)
+			return
+		}
+	} else {
+		err := conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "error", "message": "Vous devez vous connecter pour vous deconnecter !"}`))
+		if err != nil {
+			log.Println(err)
+			return
+		}
+	}
 }
