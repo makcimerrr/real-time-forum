@@ -3,48 +3,32 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"hash/fnv"
 	"log"
 	"net/http"
 	"strings"
 	"text/template"
 
-	// Utilisez le chemin du module
-
-	"github.com/gorilla/websocket"
-	_ "modernc.org/sqlite"
+	"github.com/gofrs/uuid"
+	_ "github.com/mattn/go-sqlite3"
+	"golang.org/x/crypto/bcrypt"
 )
 
-var (
-	upgrader = websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
-	}
-	userList []string
-)
-
-// Envoie un message à tous les clients connectés
 var templates = template.Must(template.ParseGlob("templates/*.html"))
 var db *sql.DB
 
-// Parser les données JSON de la requête
-var Loginuser struct {
-	LoginData     string `json:"logindata"`
-	Loginpassword string `json:"loginpassword"`
-}
-
 func main() {
 	var err error
-	db, err = sql.Open("sqlite", "database/data.db")
+	db, err = sql.Open("sqlite3", "database/data.db")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 
 	http.HandleFunc("/", indexHandler)
-	http.HandleFunc("/ws", websocketHandler)
-	http.HandleFunc("/login", LoginHandler)
+	http.HandleFunc("/login", loginHandler)
+	http.HandleFunc("/register", registerHandler)
 
 	// Définir le dossier "static" comme dossier de fichiers statiques
 	fs := http.FileServer(http.Dir("assets"))
@@ -57,6 +41,7 @@ func main() {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
+
 	err := templates.ExecuteTemplate(w, "index.html", nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -64,98 +49,206 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func websocketHandler(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	defer conn.Close()
-
-	// Attendre les messages du client
-	for {
-		// Lire le message du client
-		_, msg, err := conn.ReadMessage()
-		if err != nil {
-			log.Println(err)
-			break
-		}
-		log.Printf("Message reçu: %s\n", msg)
-	}
-}
-
-func hash(s string) uint32 {
-	h := fnv.New32a()
-	h.Write([]byte(s))
-	return h.Sum32()
-}
-
-// LoginHandler gère la requête de connexion
-func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	var trueemail string
-	var truepassword uint32
-	var username string
-	var Existing bool
-	// Vérifier si la méthode de requête est POST
+func loginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
-		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&Loginuser); err != nil {
-		http.Error(w, "Erreur lors de la lecture du corps de la requête", http.StatusBadRequest)
+	var loginData struct {
+		LoginData     string `json:"loginData"`
+		LoginPassword string `json:"loginPassword"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&loginData); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if strings.Contains(Loginuser.LoginData, "@") {
-		loginemail := Loginuser.LoginData
-		err := db.QueryRow("SELECT username, email, password FROM users WHERE email = ?", loginemail).Scan(&username, &trueemail, &truepassword)
-		if err != nil {
-			Existing = true
-		}
+	var trueemail string
+	var truepassword []byte
+	var username string
+	var err error
+
+	if strings.Contains(loginData.LoginData, "@") {
+		// Si loginData contient un "@", alors c'est un email
+		email := loginData.LoginData
+		err = db.QueryRow("SELECT username, email, password FROM users WHERE email = ?", email).Scan(&username, &trueemail, &truepassword)
 	} else {
-		loginuser := Loginuser.LoginData
-		err := db.QueryRow("SELECT username, email, password FROM users WHERE username = ?", loginuser).Scan(&username, &trueemail, &truepassword)
-		if err != nil {
-			Existing = true
-		}
+		// Sinon, c'est un nom d'utilisateur
+		username := loginData.LoginData
+		err = db.QueryRow("SELECT username, email, password FROM users WHERE username = ?", username).Scan(&username, &trueemail, &truepassword)
 	}
 
-	if !Existing {
-		loginpassword := Loginuser.Loginpassword
-		hashloginpassword := hash(loginpassword)
-		wrongPassword := false
-		// Vérifier le mot de passe
-		if hashloginpassword != truepassword {
-			wrongPassword = true
+	if err != nil {
+		jsonResponse := map[string]interface{}{
+			"success": false,
+			"message": "Email ou username incorrect",
 		}
-		if !wrongPassword {
-			// Authentification réussie, renvoyer une réponse avec un statut 200 (OK)
-			response := map[string]interface{}{
-				"status":  "success",
-				"message": "Connexion réussie",
-			}
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(response)
-		} else {
-			// Authentification échouée, renvoyer une réponse avec un statut 401 (Unauthorized)
-			response := map[string]interface{}{
-				"status":  "error",
+		json.NewEncoder(w).Encode(jsonResponse)
+	} else {
+		if err := bcrypt.CompareHashAndPassword([]byte(truepassword), []byte(loginData.LoginPassword)); err != nil {
+			jsonResponse := map[string]interface{}{
+				"success": false,
 				"message": "Mot de passe incorrect",
 			}
-			w.WriteHeader(http.StatusUnauthorized)
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(response)
+			json.NewEncoder(w).Encode(jsonResponse)
+		} else {
+
+			err := createAndSetSessionCookies(w, username)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			jsonResponse := map[string]interface{}{
+				"success": true,
+				"message": "Connexion spécie",
+			}
+			json.NewEncoder(w).Encode(jsonResponse)
 		}
-	} else {
-		// Authentification échouée, renvoyer une réponse avec un statut 401 (Unauthorized)
-		response := map[string]interface{}{
-			"status":  "error",
-			"message": "Nom d'utilisateur ou email incorrect",
-		}
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
 	}
 
+}
+
+func registerHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var registerData struct {
+		Username  string `json:"username"`
+		Email     string `json:"email"`
+		Password  string `json:"password"`
+		Age       string `json:"age"`
+		Gender    string `json:"gender"`
+		FirstName string `json:"firstName"`
+		LastName  string `json:"lastName"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&registerData); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var isError bool
+
+	// Vérification si le nom d'utilisateur est déjà utilisé
+	var existingUsername string
+	err := db.QueryRow("SELECT username FROM users WHERE username = ?", registerData.Username).Scan(&existingUsername)
+	if err == nil {
+		isError = true
+		jsonResponse := map[string]interface{}{
+			"success": false,
+			"message": "Nom d'utilisateur déjà utilisé",
+		}
+		json.NewEncoder(w).Encode(jsonResponse)
+	}
+	// Vérification si l'e-mail est déjà utilisé
+	var existingEmail string
+	err = db.QueryRow("SELECT email FROM users WHERE email = ?", registerData.Email).Scan(&existingEmail)
+	if err == nil {
+		isError = true
+		jsonResponse := map[string]interface{}{
+			"success": false,
+			"message": "Nom d'utilisateur déjà utilisé",
+		}
+		json.NewEncoder(w).Encode(jsonResponse)
+	}
+
+	if !isError {
+		insertUser := "INSERT INTO users (username, email, password, age, gender, first_name, last_name) VALUES (?, ?, ?, ?, ?, ?, ?)"
+
+		encryptPassword, _ := bcrypt.GenerateFromPassword([]byte(registerData.Password), bcrypt.DefaultCost)
+
+		_, err = db.Exec(insertUser, registerData.Username, registerData.Email, encryptPassword, registerData.Age, registerData.Gender, registerData.FirstName, registerData.LastName)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+		jsonResponse := map[string]interface{}{
+			"success": true,
+			"message": "Enregistrement réussie",
+		}
+		json.NewEncoder(w).Encode(jsonResponse)
+
+	}
+
+}
+
+func generateSessionToken() (string, error) {
+	id := uuid.Must(uuid.NewV4())
+	token := id.String()
+	return token, nil
+}
+
+func createAndSetSessionCookies(w http.ResponseWriter, username string) error {
+	// Générer un nouveau jeton de session uniquement si le nom d'utilisateur n'est pas vide
+	if username == "" {
+		return errors.New("username is empty")
+	}
+	var err error
+
+	// Vérifier si l'utilisateur a déjà une entrée dans la base de données
+	var existingSessionToken string
+	err = db.QueryRow("SELECT sessionToken FROM token_user WHERE username = ?", username).Scan(&existingSessionToken)
+	if err == sql.ErrNoRows {
+		// Si l'utilisateur n'a pas encore d'entrée, générer un nouveau jeton de session
+		sessionToken, err := generateSessionToken()
+		if err != nil {
+			return err
+		}
+		// Insérer la nouvelle entrée dans la base de données
+		_, err = db.Exec("INSERT INTO token_user (username, sessionToken) VALUES (?, ?)", username, sessionToken)
+		if err != nil {
+			return err
+		}
+		// Créer un cookie contenant le nom d'utilisateur
+		userCookie := http.Cookie{
+			Name:     "username",
+			Value:    username,
+			Path:     "/",
+			HttpOnly: true,
+		}
+		http.SetCookie(w, &userCookie)
+		// Créer un cookie contenant le jeton de session
+		sessionCookie := http.Cookie{
+			Name:     "session",
+			Value:    sessionToken,
+			Path:     "/",
+			HttpOnly: true,
+		}
+		http.SetCookie(w, &sessionCookie)
+	} else if err == nil {
+		// Si l'utilisateur a déjà une entrée, mettre à jour le jeton de session existant
+		sessionToken, err := generateSessionToken()
+		if err != nil {
+			return err
+		}
+		// Mettre à jour le jeton de session dans la base de données
+		_, err = db.Exec("UPDATE token_user SET sessionToken = ? WHERE username = ?", sessionToken, username)
+		if err != nil {
+			return err
+		}
+		// Créer un cookie contenant le nom d'utilisateur
+		userCookie := http.Cookie{
+			Name:     "username",
+			Value:    username,
+			Path:     "/",
+			HttpOnly: true,
+		}
+		http.SetCookie(w, &userCookie)
+		// Créer un cookie contenant le jeton de session
+		sessionCookie := http.Cookie{
+			Name:     "session",
+			Value:    sessionToken,
+			Path:     "/",
+			HttpOnly: true,
+		}
+		http.SetCookie(w, &sessionCookie)
+	} else {
+		// En cas d'erreur différente de "pas de lignes", renvoyer l'erreur
+		return err
+	}
+	return nil
 }
