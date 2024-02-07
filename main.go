@@ -72,12 +72,12 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if strings.Contains(loginData.LoginData, "@") {
 		// Si loginData contient un "@", alors c'est un email
-		email := loginData.LoginData
-		err = db.QueryRow("SELECT username, email, password FROM users WHERE email = ?", email).Scan(&username, &trueemail, &truepassword)
+		Loginemail := loginData.LoginData
+		err = db.QueryRow("SELECT username, email, password FROM users WHERE email = ?", Loginemail).Scan(&username, &trueemail, &truepassword)
 	} else {
 		// Sinon, c'est un nom d'utilisateur
-		username := loginData.LoginData
-		err = db.QueryRow("SELECT username, email, password FROM users WHERE username = ?", username).Scan(&username, &trueemail, &truepassword)
+		Loginusername := loginData.LoginData
+		err = db.QueryRow("SELECT username, email, password FROM users WHERE username = ?", Loginusername).Scan(&username, &trueemail, &truepassword)
 	}
 
 	if err != nil {
@@ -95,14 +95,16 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(jsonResponse)
 		} else {
 
-			err := createAndSetSessionCookies(w, username)
+			usernameCookie, sessionTokenCookie, err := createAndSetSessionCookies(w, username)
 			if err != nil {
 				log.Fatal(err)
 			}
 
 			jsonResponse := map[string]interface{}{
-				"success": true,
-				"message": "Connexion spécie",
+				"success":  true,
+				"message":  "Connexion spécie",
+				"username": usernameCookie,
+				"token":    sessionTokenCookie,
 			}
 			json.NewEncoder(w).Encode(jsonResponse)
 		}
@@ -182,10 +184,10 @@ func generateSessionToken() (string, error) {
 	return token, nil
 }
 
-func createAndSetSessionCookies(w http.ResponseWriter, username string) error {
+func createAndSetSessionCookies(w http.ResponseWriter, username string) (string, string, error) {
 	// Générer un nouveau jeton de session uniquement si le nom d'utilisateur n'est pas vide
 	if username == "" {
-		return errors.New("username is empty")
+		return "", "", errors.New("username is empty")
 	}
 	var err error
 
@@ -196,59 +198,32 @@ func createAndSetSessionCookies(w http.ResponseWriter, username string) error {
 		// Si l'utilisateur n'a pas encore d'entrée, générer un nouveau jeton de session
 		sessionToken, err := generateSessionToken()
 		if err != nil {
-			return err
+			return "", "", err
 		}
 		// Insérer la nouvelle entrée dans la base de données
 		_, err = db.Exec("INSERT INTO token_user (username, sessionToken) VALUES (?, ?)", username, sessionToken)
 		if err != nil {
-			return err
+			return "", "", err
 		}
-		// Créer un cookie contenant le nom d'utilisateur
-		userCookie := http.Cookie{
-			Name:     "username",
-			Value:    username,
-			Path:     "/",
-			HttpOnly: true,
-		}
-		http.SetCookie(w, &userCookie)
-		// Créer un cookie contenant le jeton de session
-		sessionCookie := http.Cookie{
-			Name:     "session",
-			Value:    sessionToken,
-			Path:     "/",
-			HttpOnly: true,
-		}
-		http.SetCookie(w, &sessionCookie)
+
+		return username, sessionToken, nil
+
 	} else if err == nil {
 		// Si l'utilisateur a déjà une entrée, mettre à jour le jeton de session existant
 		sessionToken, err := generateSessionToken()
 		if err != nil {
-			return err
+			return "", "", err
 		}
 		// Mettre à jour le jeton de session dans la base de données
 		_, err = db.Exec("UPDATE token_user SET sessionToken = ? WHERE username = ?", sessionToken, username)
 		if err != nil {
-			return err
+			return "", "", err
 		}
-		// Créer un cookie contenant le nom d'utilisateur
-		userCookie := http.Cookie{
-			Name:     "username",
-			Value:    username,
-			Path:     "/",
-			HttpOnly: true,
-		}
-		http.SetCookie(w, &userCookie)
-		// Créer un cookie contenant le jeton de session
-		sessionCookie := http.Cookie{
-			Name:     "session",
-			Value:    sessionToken,
-			Path:     "/",
-			HttpOnly: true,
-		}
-		http.SetCookie(w, &sessionCookie)
+
+		return username, sessionToken, nil
 	} else {
 		// En cas d'erreur différente de "pas de lignes", renvoyer l'erreur
-		return err
+		return "", "", err
 	}
-	return nil
+	return "", "", nil
 }
