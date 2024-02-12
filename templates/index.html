@@ -32,6 +32,11 @@
         <div class="loginForm">
             <form id="loginForm">
 
+                <!-- Ajoutez cette div pour afficher les messages d'erreur -->
+                <div id="notifTextLogin" style="color: green;">
+                    <span id="notifMessageLogin"></span>
+                </div>
+
                 <label for="logindata">Username ou Email:</label>
                 <input type="text" id="logindata" name="logindata" required><br>
 
@@ -80,6 +85,7 @@
 
         <div class="home">
             <div id="title"></div>
+            <div id="userList"></div>
         </div>
 
         <script src="/static/js/script.js"></script>
