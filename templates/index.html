@@ -25,9 +25,10 @@
         <h1>Forum</h1>
 
         <div class="accueil">
-            <a onclick="showDiv('loginForm')">Login</a>
-            <a onclick="showDiv('registrationForm')">Register</a>
+            <a id="loginLink" href="#">Login</a>
+            <a id="registerLink" href="#">Register</a>
         </div>
+
 
         <div class="loginForm">
             <form id="loginForm">
@@ -88,7 +89,8 @@
             <div id="userList"></div>
         </div>
 
-        <script src="/static/js/script.js"></script>
+        <script src="dist/bundle.js"></script>
+
     </main>
 </body>
 

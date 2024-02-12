@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"database/sql"
-
 	"text/template"
 )
 

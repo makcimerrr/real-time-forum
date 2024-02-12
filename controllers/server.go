@@ -23,10 +23,12 @@ func StartServer() {
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/login", LoginHandler)
 	http.HandleFunc("/register", RegisterHandler)
+	http.HandleFunc("/ws", WebSocketHandler)
 
-	// Définir le dossier "static" comme dossier de fichiers statiques
-	fs := http.FileServer(http.Dir("assets"))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
+	http.HandleFunc("/dist/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/javascript")
+		http.ServeFile(w, r, r.URL.Path[1:])
+	})
 
 	port := 8080
 	fmt.Printf("Voici le lien pour ouvrir la page web http://localhost:%d/", port)
@@ -44,4 +46,12 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+func serveStatic(w http.ResponseWriter, r *http.Request) {
+	// Définir le bon type MIME pour les fichiers JavaScript
+	w.Header().Set("Content-Type", "text/javascript")
+
+	// Charger le fichier demandé depuis le système de fichiers
+	http.ServeFile(w, r, r.URL.Path[1:])
 }
