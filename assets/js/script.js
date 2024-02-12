@@ -1,3 +1,5 @@
+function WebSocketManager(user) {}
+
 // Fonction pour obtenir la valeur d'un cookie en fonction de son nom
 function getCookie(name) {
   var decodedCookie = decodeURIComponent(document.cookie);
@@ -9,8 +11,9 @@ function getCookie(name) {
     }
   }
   return null;
-} // Vérifier les cookies au chargement de la page
+}
 
+// Vérifier les cookies au chargement de la page
 window.onload = function () {
   var username = getCookie("username");
   if (username) {
@@ -79,7 +82,6 @@ function registerUser() {
   document.getElementById("errorText").innerText = "";
 
   // Variable pour suivre si une erreur a été rencontrée
-  var isError = 0;
 
   var user = {
     type: "register",
@@ -92,44 +94,45 @@ function registerUser() {
     password: password,
   };
 
-  // Établir une connexion WebSocket
-  var socket = new WebSocket("ws://" + window.location.host + "/ws");
+  errorText.innerText = "";
 
-  // Envoyer les données utilisateur via WebSocket
-  socket.onopen = function () {
-    socket.send(JSON.stringify(user));
-  };
+  // Effectuer une requête POST vers votre API Go
+  fetch("http://localhost:8080/register", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(user),
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      return response.json();
+    })
+    .then((data) => {
+      // Loguer la réponse pour le débogage
+      console.log("Server response:", data);
 
-  // Recevoir la confirmation d'inscription ou l'erreur via WebSocket
-  socket.onmessage = function (event) {
-    var data = JSON.parse(event.data);
-    var type = data.type;
-    var message = data.message;
+      // Traiter la réponse JSON côté client
+      if (data.type === "error") {
+        // Loguer l'entrée dans la branche "error"
+        console.log("Entered error branch");
 
-    var errorText = document.getElementById("errorText");
-    var errorMessage = document.getElementById("errorMessage");
-
-    if (type === "error") {
-      errorMessage.innerText = message;
-      errorText.style.display = "block"; // Afficher la zone de texte d'erreur
-      // Masquer l'erreur automatiquement après 15 secondes
-      isError = 1;
-      setTimeout(function () {
-        errorMessage.innerText = "";
-        errorText.style.display = "none"; // Masquer la zone de texte d'erreur
-      }, 15000);
-    } else if (type === "join") {
-      // C'est une notification, afficher la notification de succès
-      showNotification("Oh mais qui voilà !", message);
-    }
-    socket.close();
-
-    // Si l'enregistrement est réussi, masquer la div "registrationForm" et afficher la div "home"
-    if (isError === 0) {
-      showDiv("loginForm");
-    }
-  };
+        // Afficher les messages d'erreur
+        document.getElementById("errorText").innerText =
+          "Erreur : " + data.message + " " + data.errors.join(", ");
+      } else if (data.type === "success") {
+        // Traiter le succès (peut-être rediriger l'utilisateur, afficher un message, etc.)
+        console.log("Inscription réussie !");
+      } else {
+        // Loguer l'entrée dans la branche inattendue
+        console.error("Réponse inattendue du serveur:", data);
+      }
+    });
 }
+
+
 
 function loginUser() {
   // Récupérer le formulaire par son ID
@@ -150,51 +153,52 @@ function loginUser() {
     loginpassword: loginpassword,
   };
 
-  // Établir une connexion WebSocket
-  var socket = new WebSocket("ws://" + window.location.host + "/ws");
+  errorText.innerText = "";
 
-  // Envoyer les données utilisateur via WebSocket
-  socket.onopen = function () {
-    socket.send(JSON.stringify(user));
-  };
+  // Effectuer une requête POST vers votre API Go
+  fetch("http://localhost:8080/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(user),
+  })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        // Loguer la réponse pour le débogage
+        console.log("Server response:", data);
 
-  // Recevoir la confirmation de login ou l'erreur via WebSocket
-  socket.onmessage = function (event) {
-    var data = JSON.parse(event.data);
-    var type = data.type;
-    var message = data.message;
-    var tokenCookie = data.tokenCookie;
-    var usernameCookie = data.usernameCookie;
+        // Traiter la réponse JSON côté client
+        if (data.type === "error") {
+          // Loguer l'entrée dans la branche "error"
+          console.log("Entered error branch");
 
-    var errorTextLogin = document.getElementById("errorTextLogin");
-    var errorMessageLogin = document.getElementById("errorMessageLogin");
+          // Afficher les messages d'erreur
+          document.getElementById("errorTextLogin").innerText =
+              "Erreur : " + data.message + " " + data.errors.join(", ");
+        } else if (data.type === "success") {
+          // Traiter le succès (peut-être rediriger l'utilisateur, afficher un message, etc.)
+          console.log("Inscription réussie !");
 
-    if (type === "error") {
-      errorMessageLogin.innerText = message;
-      errorTextLogin.style.display = "block"; // Afficher la zone de texte d'erreur
-      // Masquer l'erreur automatiquement après 15 secondes
-      isError = 1;
-      setTimeout(function () {
-        errorMessage.innerText = "";
-        errorText.style.display = "none"; // Masquer la zone de texte d'erreur
-      }, 15000);
-    } else if (type === "login") {
-      // Créer un cookie côté client avec le jeton
-      document.cookie = "username=" + usernameCookie + "; path=/";
-      document.cookie = "session=" + tokenCookie + "; path=/";
-
-      // C'est une notification, afficher la notification de succès
-      showNotification("Enfin te voilà !", message);
-    }
-    socket.close();
-
-    // Si l'enregistrement est réussi, masquer la div "registrationForm" et afficher la div "home"
-    if (isError === 0) {
-      window.location.reload();
-      showDiv("home");
-    }
-  };
+            window.location.reload();
+            showDiv("home");
+          
+        } else {
+          // Loguer l'entrée dans la branche inattendue
+          console.error("Réponse inattendue du serveur:", data);
+        }
+      });
 }
+
+
+
+
+
 
 function showNotification(title, message) {
   // Vérifier si le navigateur prend en charge les notifications
@@ -251,21 +255,20 @@ function showDiv(divName) {
   }
 }
 
-function HideDiv(divName) {
-  // Masquer toutes les divs
-  var divs = document.querySelectorAll(".creatediscussion");
-  divs.forEach(function (div) {
-    div.style.display = "block";
-  });
+// function HideDiv(divName) {
+//   // Masquer toutes les divs
+//   var divs = document.querySelectorAll(".creatediscussion");
+//   divs.forEach(function (div) {
+//     div.style.display = "block";
+//   });
 
-  // Afficher la div spécifiée
-  var selectedDiv = document.querySelector("." + divName);
-  if (selectedDiv) {
-    selectedDiv.style.display = "none";
-  }
-}
+//   // Afficher la div spécifiée
+//   var selectedDiv = document.querySelector("." + divName);
+//   if (selectedDiv) {
+//     selectedDiv.style.display = "none";
+//   }
+// }
 
-// Écouter l'événement de soumission du formulaire
 document
   .getElementById("creatediscussion")
   .addEventListener("submit", function (event) {
@@ -276,61 +279,101 @@ document
     submitDiscussionForm();
   });
 
-  function submitDiscussionForm() {
-    // Récupérer le formulaire par son ID
-    var discussionForm = document.getElementById("creatediscussion");
-  
-    // Récupérer les valeurs des champs du formulaire
-    var title = discussionForm.elements["title"].value;
-    var text = discussionForm.elements["message"].value;
-    var category = discussionForm.elements["category"].value;
-  
-    console.log(title);
-    console.log(text);
-    console.log(category);
-  
-    // Variable pour suivre si une erreur a été rencontrée
-    var isError = 0;
-  
-    var discussionData = {
-      type: "createDiscussion",
-      title: title,
-      text: text,
-      category: category,
-    };
-  
-    // Établir une connexion WebSocket
-    var socket = new WebSocket("ws://" + window.location.host + "/ws");
-  
-    // Envoyer les données de discussion via WebSocket
-    socket.onopen = function () {
-      socket.send(JSON.stringify(discussionData));
-    };
-  
-    // Gérer les réponses du serveur
-    socket.onmessage = function (event) {
-      var data = JSON.parse(event.data);
-      var type = data.type;
-      var message = data.message;
-  
-      if (type === "error") {
-        // Gérer les erreurs si nécessaire
-        console.error("Error:", message);
-        isError = 1;
-      } else if (type === "createDiscussion") {
-        // C'est une notification, afficher la notification de succès
-        console.log("Discussion Created:", message);
-        showNotification("Discussion Created!", message);
-      }
-  
-      // Fermer la connexion WebSocket
-      socket.close();
-  
-      // Si la création de la discussion est réussie, masquer la div "creatediscussion" et afficher la div "home"
-      if (isError === 0) {
-        window.location.reload();
-        showDiv("home");
-      }
-    };
-  }
-  
+function submitDiscussionForm() {
+  // Récupérer le formulaire par son ID
+  var discussionForm = document.getElementById("creatediscussion");
+
+  // Récupérer les valeurs des champs du formulaire
+  var title = discussionForm.elements["title"].value;
+  var text = discussionForm.elements["message"].value;
+  var category = discussionForm.elements["category"].value;
+
+  console.log(title);
+  console.log(text);
+  console.log(category);
+
+  var discussionData = {
+    type: "createDiscussion",
+    title: title,
+    text: text,
+    category: category,
+  };
+
+  // Établir une connexion WebSocket
+  var socket = new WebSocket("ws://" + window.location.host + "/ws");
+
+  // Envoyer les données de discussion via WebSocket
+  socket.onopen = function () {
+    socket.send(JSON.stringify(discussionData));
+  };
+  console.log("2");
+
+  // C'est une notification, afficher la notification de succès
+  console.log("Discussion Created:");
+
+  showDiv("home");
+}
+
+// // Créez une instance de WebSocket au chargement de la page
+// var socket = new WebSocket("ws://" + window.location.host + "/ws");
+
+// // Écoutez les événements de message de la WebSocket
+// socket.onopen = function () {
+//   console.log("WebSocket connection opened.");
+// };
+
+// socket.onmessage = function (event) {
+//   var data = JSON.parse(event.data);
+//   console.log("Received message:", data);
+
+//   var type = data.type;
+
+//   if (type === "discussionList") {
+//     // Les données reçues sont une liste de discussions
+//     var discussions = data.data;
+
+//     // Faites quelque chose avec la liste de discussions, par exemple, les afficher
+//     console.log("Discussions received:", discussions);
+//     displayDiscussions(discussions);
+//   }
+// };
+
+// socket.onclose = function (event) {
+//   console.log("WebSocket connection closed:", event);
+// };
+
+// socket.onerror = function (error) {
+//   console.error("WebSocket encountered an error:", error);
+// };
+
+// Fonction pour afficher les discussions dans l'interface utilisateur
+// function displayDiscussions(discussions) {
+//   console.log("testttttttt");
+//   // Récupérer l'élément où vous souhaitez afficher les discussions
+//   var discussionContainer = document.getElementById("discussionContainer");
+
+//   // Effacer le contenu précédent du conteneur de discussion
+//   discussionContainer.innerHTML = "";
+
+//   // Parcourir toutes les discussions et les afficher
+//   discussions.forEach(function (discussion) {
+//     // Créer un élément de discussion
+//     var discussionElement = document.createElement("div");
+//     discussionElement.classList.add("discussion");
+
+//     // Construire le contenu de la discussion
+//     var discussionHTML = "<h3>" + discussion.title + "</h3>";
+//     discussionHTML += "<p>" + discussion.text + "</p>";
+//     discussionHTML +=
+//       "<p><strong>Category:</strong> " + discussion.category + "</p>";
+
+//     // Mettre le contenu dans l'élément de discussion
+//     discussionElement.innerHTML = discussionHTML;
+
+//     // Ajouter l'élément de discussion au conteneur de discussion
+//     discussionContainer.appendChild(discussionElement);
+//   });
+
+//   // Afficher les données des discussions dans la console pour le test
+//   console.log("Discussions:", discussions);
+// }
