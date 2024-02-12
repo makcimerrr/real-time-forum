@@ -5,6 +5,8 @@ import (
 	"errors"
 	"github.com/gofrs/uuid"
 	"golang.org/x/crypto/bcrypt"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func generateSessionToken() (string, error) {

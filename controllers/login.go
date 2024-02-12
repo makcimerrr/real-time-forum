@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
 )
 
