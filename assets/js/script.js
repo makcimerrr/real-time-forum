@@ -60,7 +60,6 @@ document
   .addEventListener("submit", function (event) {
     // Empêcher le comportement de soumission par défaut
     event.preventDefault();
-
     // Appeler la fonction registerUser de votre script JavaScript
     loginUser();
   });
@@ -125,14 +124,14 @@ function registerUser() {
       } else if (data.type === "success") {
         // Traiter le succès (peut-être rediriger l'utilisateur, afficher un message, etc.)
         console.log("Inscription réussie !");
+        showDiv("home");
+        showNotification("Success", "Connected");
       } else {
         // Loguer l'entrée dans la branche inattendue
         console.error("Réponse inattendue du serveur:", data);
       }
     });
 }
-
-
 
 function loginUser() {
   // Récupérer le formulaire par son ID
@@ -163,42 +162,38 @@ function loginUser() {
     },
     body: JSON.stringify(user),
   })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        return response.json();
-      })
-      .then((data) => {
-        // Loguer la réponse pour le débogage
-        console.log("Server response:", data);
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      return response.json();
+    })
+    .then((data) => {
+      // Loguer la réponse pour le débogage
+      console.log("Server response:", data);
 
-        // Traiter la réponse JSON côté client
-        if (data.type === "error") {
-          // Loguer l'entrée dans la branche "error"
-          console.log("Entered error branch");
+      // Traiter la réponse JSON côté client
+      if (data.type === "error") {
+        // Loguer l'entrée dans la branche "error"
+        console.log("Entered error branch");
 
-          // Afficher les messages d'erreur
-          document.getElementById("errorTextLogin").innerText =
-              "Erreur : " + data.message + " " + data.errors.join(", ");
-        } else if (data.type === "success") {
-          // Traiter le succès (peut-être rediriger l'utilisateur, afficher un message, etc.)
-          console.log("Inscription réussie !");
+        // Afficher les messages d'erreur
+        document.getElementById("errorTextLogin").innerText =
+          "Erreur : " + data.message + " " + data.errors.join(", ");
+      } else if (data.type === "success") {
+        // Traiter le succès (peut-être rediriger l'utilisateur, afficher un message, etc.)
+        console.log("conn réussie !");
 
-            window.location.reload();
-            showDiv("home");
-          
-        } else {
-          // Loguer l'entrée dans la branche inattendue
-          console.error("Réponse inattendue du serveur:", data);
-        }
-      });
+        showDiv("home");
+
+        showNotification("Success", "Connected");
+        //WebSocketManager()
+      } else {
+        // Loguer l'entrée dans la branche inattendue
+        console.error("Réponse inattendue du serveur:", data);
+      }
+    });
 }
-
-
-
-
-
 
 function showNotification(title, message) {
   // Vérifier si le navigateur prend en charge les notifications
@@ -254,20 +249,6 @@ function showDiv(divName) {
     selectedDiv.style.display = "block";
   }
 }
-
-// function HideDiv(divName) {
-//   // Masquer toutes les divs
-//   var divs = document.querySelectorAll(".creatediscussion");
-//   divs.forEach(function (div) {
-//     div.style.display = "block";
-//   });
-
-//   // Afficher la div spécifiée
-//   var selectedDiv = document.querySelector("." + divName);
-//   if (selectedDiv) {
-//     selectedDiv.style.display = "none";
-//   }
-// }
 
 document
   .getElementById("creatediscussion")
