@@ -197,11 +197,13 @@ func createAndSetSessionCookies(w http.ResponseWriter, username string) (string,
 	if err == sql.ErrNoRows {
 		// Si l'utilisateur n'a pas encore d'entrée, générer un nouveau jeton de session
 		sessionToken, err := generateSessionToken()
+
+		encryptToken, _ := bcrypt.GenerateFromPassword([]byte(sessionToken), bcrypt.DefaultCost)
 		if err != nil {
 			return "", "", err
 		}
 		// Insérer la nouvelle entrée dans la base de données
-		_, err = db.Exec("INSERT INTO token_user (username, sessionToken) VALUES (?, ?)", username, sessionToken)
+		_, err = db.Exec("INSERT INTO token_user (username, sessionToken) VALUES (?, ?)", username, encryptToken)
 		if err != nil {
 			return "", "", err
 		}
@@ -214,8 +216,9 @@ func createAndSetSessionCookies(w http.ResponseWriter, username string) (string,
 		if err != nil {
 			return "", "", err
 		}
+		encryptToken, _ := bcrypt.GenerateFromPassword([]byte(sessionToken), bcrypt.DefaultCost)
 		// Mettre à jour le jeton de session dans la base de données
-		_, err = db.Exec("UPDATE token_user SET sessionToken = ? WHERE username = ?", sessionToken, username)
+		_, err = db.Exec("UPDATE token_user SET sessionToken = ? WHERE username = ?", encryptToken, username)
 		if err != nil {
 			return "", "", err
 		}
