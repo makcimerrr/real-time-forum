@@ -9,22 +9,6 @@ Clone the repository
 https://zone01normandie.org/git/mdubois/real-time-forum
 ```
 
-## Install dependencies
-Navigate to the project directory and install the necessary dependencies using npm (Node Package Manager).
-
-````bash
-cd real-time-forum
-npm install
-````
-
-## Compile code with Webpack
-
-Use the construction tools manager ["Webpack"](https://webpack.js.org/loaders/) to manage JavaScript modules.
-
-```bash
-npx webpack
-```
-
 ## Start the server
 Launch the Go server to run the application.
 

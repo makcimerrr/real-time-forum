@@ -87,10 +87,23 @@
         <div class="home">
             <div id="title"></div>
             <div id="userList"></div>
+            <div id="createPosteForm">
+                <form id="postForm">
+                    <label for="titlePost">Titre:</label>
+                    <input type="text" id="titlePost" name="titlePost" required><br>
+                    <label for="category">Categories:</label>
+                    <select name="category" id="category">
+                        <option value="objet">Object</option>
+                        <option value="problem">Problem</option>
+                    </select><br>
+                    <label for="message">Message:</label>
+                    <input type="text" id="message" name="message" required><br>
+                    <button type="submit">Envoyer</button>
+                </form>
+            </div>
         </div>
 
-        <script src="dist/bundle.js"></script>
-
+        <script type="module" src="/static/js/main.js"></script>
     </main>
 </body>
 

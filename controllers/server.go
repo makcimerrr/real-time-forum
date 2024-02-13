@@ -25,11 +25,8 @@ func StartServer() {
 	http.HandleFunc("/register", RegisterHandler)
 	http.HandleFunc("/ws", WebSocketHandler)
 
-	http.HandleFunc("/dist/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/javascript")
-		http.ServeFile(w, r, r.URL.Path[1:])
-	})
-
+	fs := http.FileServer(http.Dir("assets"))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
 	port := 8080
 	fmt.Printf("Voici le lien pour ouvrir la page web http://localhost:%d/", port)
 	println()

@@ -1,5 +1,6 @@
-import {getCookie} from "./cookie";
-import {logout} from "./action";
+import {logout} from "./login.js";
+import {getCookie} from "./cookie.js";
+
 function showHome() {
     const username = getCookie("username");
 
@@ -37,8 +38,7 @@ registerLink.addEventListener('click', function(event) {
     showDiv('registrationForm');
 });
 
-
-export  function showDiv(divName) {
+export function showDiv(divName) {
     // Masquer toutes les divs
     var divs = document.querySelectorAll
     (

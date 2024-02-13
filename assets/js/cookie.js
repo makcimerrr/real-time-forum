@@ -12,7 +12,6 @@ export function deleteCookie(name, sameSite) {
     document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/" + (sameSite ? "; SameSite=" + sameSite : "");
 }
 
-
 export function setCookie(name, value, days, sameSite) {
     var expires = "";
     if (days) {
