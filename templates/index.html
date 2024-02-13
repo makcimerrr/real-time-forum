@@ -8,21 +8,24 @@
     <style>
         .registrationForm,
         .home,
-        .loginForm {
+        .loginForm,
+        .createPosteForm
+        {
             display: none;
         }
 
         header {
-            display: block;
+            display: none;
         }
     </style>
 </head>
 
 <body>
     <header>
+        <button id="logout">Logout</button>
     </header>
     <main>
-        <h1>Forum</h1>
+        <h1 id="Forum">Forum</h1>
 
         <div class="accueil">
             <a id="loginLink" href="#">Login</a>
@@ -38,69 +41,72 @@
                     <span id="notifMessageLogin"></span>
                 </div>
 
-                <label for="logindata">Username ou Email:</label>
+                <label for="logindata">Username or Email:</label>
                 <input type="text" id="logindata" name="logindata" required><br>
 
-                <label for="loginpassword">Mot de passe:</label>
+                <label for="loginpassword">Password:</label>
                 <input type="password" id="loginpassword" name="loginpassword" required><br>
 
                 <!-- Ajoutez cette div pour afficher les messages d'erreur -->
                 <div id="errorTextLogin" style="color: red;">
                     <span id="errorMessageLogin"></span>
                 </div>
-                <button type="submit">Se connecter</button>
+                <button type="submit">Sign in</button>
             </form>
         </div>
         <div class="registrationForm">
             <form id="registrationForm">
-                <label for="username">Nom d'utilisateur:</label>
+                <label for="username">Username:</label>
                 <input type="text" id="username" name="username" required><br>
 
                 <label for="email">Email:</label>
                 <input type="email" id="email" name="email" required><br>
 
-                <label for="password">Mot de passe:</label>
+                <label for="password">Password:</label>
                 <input type="password" id="password" name="password" required><br>
 
                 <label for="age">Age:</label>
                 <input type="number" id="age" name="age" required min="1"><br>
 
-                <label for="gender">Genre:</label>
+                <label for="gender">Gender:</label>
                 <select name="gender" id="gender">
                     <option value="male">Homme</option>
                     <option value="female">Femme</option>
                 </select><br>
-                <label for="firstName">Prénom:</label>
+                <label for="firstName">First Name:</label>
                 <input type="text" id="firstName" name="firstName" required><br>
 
-                <label for="lastName">Nom de famille:</label>
+                <label for="lastName">Last Name:</label>
                 <input type="text" id="lastName" name="lastName" required><br>
 
                 <!-- Ajoutez cette div pour afficher les messages d'erreur -->
                 <div id="errorText" style="color: red;">
                     <span id="errorMessage"></span>
                 </div>
-                <button type="submit">S'inscrire</button>
+                <button type="submit">Sign up</button>
             </form>
         </div>
 
         <div class="home">
-            <div id="title"></div>
+                <h3 id="title">Home</h3>
             <div id="userList"></div>
-            <div id="createPosteForm">
-                <form id="postForm">
-                    <label for="titlePost">Titre:</label>
-                    <input type="text" id="titlePost" name="titlePost" required><br>
-                    <label for="category">Categories:</label>
-                    <select name="category" id="category">
-                        <option value="objet">Object</option>
-                        <option value="problem">Problem</option>
-                    </select><br>
-                    <label for="message">Message:</label>
-                    <input type="text" id="message" name="message" required><br>
-                    <button type="submit">Envoyer</button>
-                </form>
-            </div>
+
+            <button id="createPoste">Add a post</button>
+        </div>
+
+        <div class="createPosteForm">
+            <form id="postForm">
+                <label for="titlePost">Titre:</label>
+                <input type="text" id="titlePost" name="titlePost" required><br>
+                <label for="category">Categories:</label>
+                <select name="category" id="category">
+                    <option value="objet">Object</option>
+                    <option value="problem">Problem</option>
+                </select><br>
+                <label for="message">Message:</label>
+                <input type="text" id="message" name="message" required><br>
+                <button type="submit">Envoyer</button>
+            </form>
         </div>
 
         <script type="module" src="/static/js/main.js"></script>

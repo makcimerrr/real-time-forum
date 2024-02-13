@@ -1,5 +1,3 @@
-import { showDiv } from "./show.js";
-
 export async function register() {
     const username = document.getElementById('username').value;
     const email = document.getElementById('email').value;

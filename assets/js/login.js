@@ -1,7 +1,6 @@
-import { getCookie } from "./cookie.js";
+import { setCookie, deleteCookie } from "./cookie.js";
 import { showDiv } from "./show.js";
 import { startWebSocket } from "./websocket.js";
-import { setCookie, deleteCookie } from "./cookie.js";
 
 export function logout() {
     deleteCookie("username", "strict");
@@ -34,6 +33,7 @@ export async function login() {
                 setCookie("username", responseData.username, 30, "strict"); // 30 jours de durée de vie du cookie
                 setCookie("token", responseData.token, 30, "strict");
                 showDiv("home")
+                window.location.reload();
                 setTimeout(() => startWebSocket());
             } else {
                 document.getElementById('errorMessageLogin').innerText = responseData.message;

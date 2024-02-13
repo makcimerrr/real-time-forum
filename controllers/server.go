@@ -22,6 +22,7 @@ func StartServer() {
 
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/login", LoginHandler)
+	http.HandleFunc("/post", PostHandler)
 	http.HandleFunc("/register", RegisterHandler)
 	http.HandleFunc("/ws", WebSocketHandler)
 

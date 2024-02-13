@@ -1,27 +1,3 @@
-import {logout} from "./login.js";
-import {getCookie} from "./cookie.js";
-
-function showHome() {
-    const username = getCookie("username");
-
-    if (username) {
-        var header = document.querySelector("header");
-        var logoutButton = document.createElement("button");
-        logoutButton.textContent = "Déconnexion";
-        logoutButton.onclick = logout;
-
-        // Ajouter le bouton de déconnexion à l'élément header
-        header.appendChild(logoutButton);
-
-        var title = document.getElementById("title");
-        var heading = document.createElement("h3");
-        heading.innerHTML = "Accueil - " + username;
-        title.appendChild(heading)
-    } else {
-        console.error("Impossible de trouver le nom d'utilisateur dans les cookies.");
-    }
-}
-
 // Récupérer les liens par leur ID
 const loginLink = document.getElementById('loginLink');
 const registerLink = document.getElementById('registerLink');
@@ -40,21 +16,24 @@ registerLink.addEventListener('click', function(event) {
 
 export function showDiv(divName) {
     // Masquer toutes les divs
-    var divs = document.querySelectorAll
+    const divs = document.querySelectorAll
     (
-        '.logout, .loginForm, .accueil, .registrationForm, .home'
+        '.logout, .loginForm, .accueil, .registrationForm, .home, .createPosteForm'
     );
     divs.forEach(function (div) {
         div.style.display = 'none';
     });
 
     // Afficher la div spécifiée
-    var selectedDiv = document.querySelector('.' + divName);
+    const selectedDiv = document.querySelector('.' + divName);
     if (selectedDiv) {
         selectedDiv.style.display = 'block';
-        if (divName === "home") {
-            showHome();
-        }
     }
 
 }
+
+const addPostButton = document.getElementById('createPoste');
+addPostButton.addEventListener('click', function () {
+    showDiv('home');
+    showDiv('createPosteForm');
+})
