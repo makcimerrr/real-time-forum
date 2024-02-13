@@ -13,31 +13,26 @@ function getCookie(name) {
   return null;
 }
 
-// Vérifier les cookies au chargement de la page
-window.onload = function () {
-  var username = getCookie("username");
-  if (username) {
-    // Les cookies existent, afficher la div "home" avec le titre de l'username
-    showDiv("home");
-    document.querySelector(".title").innerHTML =
-      "<h1>Accueil - " + username + "</h1>";
+document
+    .getElementById("Logout")
+    .addEventListener("click", function (event) {
+      // Empêcher le comportement de soumission par défaut
+      event.preventDefault();
 
-    // Afficher le bouton de déconnexion dans le header
-    document.querySelector("header").innerHTML =
-      '<button onclick="logout()">Déconnexion</button>';
-  }
-};
+      logout();
+    });
 
-// Fonction pour supprimer un cookie en fonction de son nom
-function deleteCookie(name) {
-  document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-}
+
+
 
 // Fonction de déconnexion
 function logout() {
   // Supprimer les cookies "username" et "session"
-  deleteCookie("username");
-  deleteCookie("session");
+  var Cookies = document.cookie.split(';');
+
+  for (var i = 0; i < Cookies.length; i++) {
+    document.cookie = Cookies[i] + "=; expires="+ new Date(0).toUTCString();
+  }
 
   // Rediriger l'utilisateur vers la page d'accueil ou effectuer d'autres actions nécessaires
   window.location.href = "/";
@@ -103,34 +98,36 @@ function registerUser() {
     },
     body: JSON.stringify(user),
   })
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-      return response.json();
-    })
-    .then((data) => {
-      // Loguer la réponse pour le débogage
-      console.log("Server response:", data);
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        // Loguer la réponse pour le débogage
+        console.log("Server response:", data);
 
-      // Traiter la réponse JSON côté client
-      if (data.type === "error") {
-        // Loguer l'entrée dans la branche "error"
-        console.log("Entered error branch");
+        // Traiter la réponse JSON côté client
+        if (data.type === "error") {
+          // Loguer l'entrée dans la branche "error"
+          console.log("Entered error branch");
 
-        // Afficher les messages d'erreur
-        document.getElementById("errorText").innerText =
-          "Erreur : " + data.message + " " + data.errors.join(", ");
-      } else if (data.type === "success") {
-        // Traiter le succès (peut-être rediriger l'utilisateur, afficher un message, etc.)
-        console.log("Inscription réussie !");
-        showDiv("home");
-        showNotification("Success", "Connected");
-      } else {
-        // Loguer l'entrée dans la branche inattendue
-        console.error("Réponse inattendue du serveur:", data);
-      }
-    });
+          // Afficher les messages d'erreur
+          document.getElementById("errorText").innerText =
+              "Erreur : " + data.message + " " + data.errors.join(", ");
+        } else if (data.type === "success") {
+          // Traiter le succès (peut-être rediriger l'utilisateur, afficher un message, etc.)
+          console.log("Inscription réussie !");
+          showDiv("home");
+          showNotification("Success", "Connected");
+          connection(user.username, data.token);
+          console.log(data.token)
+        } else {
+          // Loguer l'entrée dans la branche inattendue
+          console.error("Réponse inattendue du serveur:", data);
+        }
+      });
 }
 
 function loginUser() {
@@ -185,7 +182,7 @@ function loginUser() {
         console.log("conn réussie !");
 
         showDiv("home");
-
+        connection(user.loginuser,data.token);
         showNotification("Success", "Connected");
         //WebSocketManager()
       } else {
@@ -213,31 +210,12 @@ function showNotification(title, message) {
   }
 }
 
-function generateUniqueToken() {
-  var crypto = window.crypto || window.msCrypto; // Utilise window.crypto pour les navigateurs modernes et window.msCrypto pour les anciens IE
-  if (!crypto) {
-    console.error(
-      "La génération de token n'est pas prise en charge dans ce navigateur."
-    );
-    return null;
-  }
 
-  var token = new Uint8Array(32);
-  crypto.getRandomValues(token);
-
-  var base64Token = btoa(String.fromCharCode.apply(null, token));
-  base64Token = base64Token
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, ""); // Encodage URL-safe
-
-  return base64Token;
-}
 
 function showDiv(divName) {
   // Masquer toutes les divs
   var divs = document.querySelectorAll(
-    ".accueil, .loginForm, .registrationForm, .home, .creatediscussion"
+    ".accueil, .loginForm, .registrationForm, .home, .creatediscussion "
   );
   divs.forEach(function (div) {
     div.style.display = "none";
@@ -260,7 +238,7 @@ document
     submitDiscussionForm();
   });
 
-function submitDiscussionForm() {
+/*function submitDiscussionForm() {
   // Récupérer le formulaire par son ID
   var discussionForm = document.getElementById("creatediscussion");
 
@@ -280,10 +258,9 @@ function submitDiscussionForm() {
     category: category,
   };
 
-  // Établir une connexion WebSocket
-  var socket = new WebSocket("ws://" + window.location.host + "/ws");
 
-  // Envoyer les données de discussion via WebSocket
+
+ // Envoyer les données de discussion via WebSocket
   socket.onopen = function () {
     socket.send(JSON.stringify(discussionData));
   };
@@ -293,7 +270,28 @@ function submitDiscussionForm() {
   console.log("Discussion Created:");
 
   showDiv("home");
+}*/
+
+function connection(name,token) {
+  setCookie(name,token)
+
+
+  // Établir une connexion WebSocket
+  //var socket = new WebSocket("ws://" + window.location.host + "/ws");
+
 }
+
+
+function setCookie(name,token) {
+
+  document.cookie = `${name}=${token}`;
+
+}
+
+
+
+
+
 
 // // Créez une instance de WebSocket au chargement de la page
 // var socket = new WebSocket("ws://" + window.location.host + "/ws");

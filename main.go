@@ -8,12 +8,13 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/websocket"
+	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
 	"io/ioutil"
 	"log"
-	_ "modernc.org/sqlite"
 	"net/http"
-	"realtimeforum/Golang" // Utilisez le chemin du module
+	"realtimeforum/Golang"
+
 	"text/template"
 )
 
@@ -55,7 +56,7 @@ type User struct {
 
 func main() {
 	var err error
-	db, err = sql.Open("sqlite", "database/data.db")
+	db, err = sql.Open("sqlite3", "database/data.db")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -94,6 +95,7 @@ func CheckPasswordHash(password, hash string) bool {
 }
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
+	var tokencrypt = ""
 
 	// Lire le corps de la requête
 	info, err := ioutil.ReadAll(r.Body)
@@ -136,7 +138,14 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			fmt.Println("Donnée non insérées ")
 		} else {
+
+			var err error
+			tokencrypt, err = CreateAndSetSessionCookies(w, user.Username)
+			if err != nil {
+				fmt.Println(err)
+			}
 			fmt.Println("Données insérées avec succès!")
+
 		}
 	}
 	// Définir l'en-tête Content-Type
@@ -170,6 +179,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		successResponse, err := json.Marshal(map[string]interface{}{
 			"type":    "success",
 			"message": "Validation succeeded",
+			"token":   tokencrypt,
 		})
 		if err != nil {
 			// Gérer l'erreur lors de la création de la réponse JSON
@@ -221,8 +231,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	CheckMDP := CheckPasswordHash(user.LoginPassword, AccountPassword)
 
+	var tokencrypt = ""
+
 	if CheckMDP == true {
 		fmt.Println("MATCHING PASSWORD")
+		tokencrypt, _ = CreateAndSetSessionCookies(w, user.LoginUser)
+		fmt.Println(tokencrypt)
 
 	} else {
 		formError = append(formError, "Wrong password !")
@@ -259,6 +273,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		successResponse, err := json.Marshal(map[string]interface{}{
 			"type":    "success",
 			"message": "Validation succeeded",
+			"token":   tokencrypt,
 		})
 		if err != nil {
 			// Gérer l'erreur lors de la création de la réponse JSON
@@ -286,10 +301,10 @@ func generateSessionToken() (string, error) {
 	return base64.URLEncoding.EncodeToString(token), nil
 }
 
-func CreateAndSetSessionCookies(w http.ResponseWriter, username string) (string, string, error) {
+func CreateAndSetSessionCookies(w http.ResponseWriter, username string) (string, error) {
 	// Générer un nouveau jeton de session uniquement si le nom d'utilisateur n'est pas vide
 	if username == "" {
-		return "", "", errors.New("username is empty")
+		return "", errors.New("username is empty")
 	}
 
 	// Vérifier si l'utilisateur a déjà une entrée dans la base de données
@@ -300,43 +315,43 @@ func CreateAndSetSessionCookies(w http.ResponseWriter, username string) (string,
 		// Si l'utilisateur n'a pas encore d'entrée, générer un nouveau jeton de session
 		sessionToken, err := generateSessionToken()
 		if err != nil {
-			return "", "", err
+			return "", err
 		}
 		// Insérer la nouvelle entrée dans la base de données
 		_, err = db.Exec("INSERT INTO token_user (username, sessionToken) VALUES (?, ?)", username, sessionToken)
 		if err != nil {
-			return "", "", err
+			return "", err
 		}
 
 		encText, err := Golang.Encrypt(sessionToken, Golang.MySecret)
 		if err != nil {
 			fmt.Println("error encrypting your classified text: ", err)
-			return "", "", err
+			return "", err
 		}
 
-		return username, encText, nil //Envoie des valeurs pour la création des cookies en JS
+		return encText, nil //Envoie des valeurs pour la création des cookies en JS
 	} else if err == nil {
 		// Si l'utilisateur a déjà une entrée, mettre à jour le jeton de session existant
 		sessionToken, err := generateSessionToken()
 		if err != nil {
-			return "", "", err
+			return "", err
 		}
 		// Mettre à jour le jeton de session dans la base de données
 		_, err = db.Exec("UPDATE token_user SET sessionToken = ? WHERE username = ?", sessionToken, username)
 		if err != nil {
-			return "", "", err
+			return "", err
 		}
 
 		encText, err := Golang.Encrypt(sessionToken, Golang.MySecret)
 		if err != nil {
 			fmt.Println("error encrypting your classified text: ", err)
-			return "", "", err
+			return "", err
 		}
 
-		return username, encText, nil //Envoie des valeurs pour la création des cookies en JS
+		return encText, nil //Envoie des valeurs pour la création des cookies en JS
 	} else {
 		// En cas d'erreur différente de "pas de lignes", renvoyer l'erreur
-		return "", "", err
+		return "", err
 	}
 }
 
