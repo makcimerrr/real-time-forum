@@ -1,3 +1,5 @@
+import {getCookie} from "./cookie.js";
+
 // Récupérer les liens par leur ID
 const loginLink = document.getElementById('loginLink');
 const registerLink = document.getElementById('registerLink');
@@ -15,6 +17,8 @@ registerLink.addEventListener('click', function(event) {
 });
 
 export function showDiv(divName) {
+
+    let username = getCookie("username");
     // Masquer toutes les divs
     const divs = document.querySelectorAll
     (
@@ -27,6 +31,14 @@ export function showDiv(divName) {
     // Afficher la div spécifiée
     const selectedDiv = document.querySelector('.' + divName);
     if (selectedDiv) {
+        if (divName === "home"){
+            const header = document.querySelector("header");
+            header.style.display = "block";
+            const titleDiv = document.getElementById("title");
+            const existingText = titleDiv.innerHTML;
+            titleDiv.innerHTML = ''
+            titleDiv.innerHTML = existingText + " - " + username;
+        }
         selectedDiv.style.display = 'block';
     }
 
@@ -34,6 +46,5 @@ export function showDiv(divName) {
 
 const addPostButton = document.getElementById('createPoste');
 addPostButton.addEventListener('click', function () {
-    showDiv('home');
     showDiv('createPosteForm');
 })

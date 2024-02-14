@@ -12,12 +12,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var postData struct {
-		Username  string `json:"username"`
-		TitlePost string `json:"titlePost"`
-		Category  string `json:"category"`
-		Mesage    string `json:"message"`
-	}
+	var postData Post
 
 	if err := json.NewDecoder(r.Body).Decode(&postData); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -50,6 +45,8 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			log.Fatal(errors)
 		} else {
+			broadcast <- postData
+
 			jsonResponse := map[string]interface{}{
 				"success": true,
 				"message": "Post créé",
@@ -60,5 +57,37 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
+	}
+}
+
+func getDiscussionsHandler(w http.ResponseWriter, r *http.Request) {
+	// Exécuter la requête pour récupérer les discussions depuis la base de données
+	rows, err := Db.Query("SELECT id, username, title, message, category FROM discussion_user")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	// Parcourir les résultats et les stocker dans une slice de discussions
+	var discussions []Discussion
+	for rows.Next() {
+		var discussion Discussion
+		if err := rows.Scan(&discussion.ID, &discussion.Username, &discussion.Title, &discussion.Message, &discussion.Category); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		discussions = append(discussions, discussion)
+	}
+	if err := rows.Err(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Encoder les discussions en JSON et les envoyer en réponse
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(discussions); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 }

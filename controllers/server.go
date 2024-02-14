@@ -25,6 +25,9 @@ func StartServer() {
 	http.HandleFunc("/post", PostHandler)
 	http.HandleFunc("/register", RegisterHandler)
 	http.HandleFunc("/ws", WebSocketHandler)
+	http.HandleFunc("/getDiscussions", getDiscussionsHandler)
+
+	go handleMessages()
 
 	fs := http.FileServer(http.Dir("assets"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
@@ -35,21 +38,9 @@ func StartServer() {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	path := r.URL.Path
-
-	log.Printf("Chemin d'accès de la requête : %s", path)
-
 	err := Templates.ExecuteTemplate(w, "index.html", nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-}
-
-func serveStatic(w http.ResponseWriter, r *http.Request) {
-	// Définir le bon type MIME pour les fichiers JavaScript
-	w.Header().Set("Content-Type", "text/javascript")
-
-	// Charger le fichier demandé depuis le système de fichiers
-	http.ServeFile(w, r, r.URL.Path[1:])
 }

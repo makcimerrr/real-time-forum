@@ -1,21 +1,24 @@
 import { getCookie } from "./cookie.js";
 import { showDiv } from "./show.js";
-import { login, logout } from "./login.js";
-import { post } from "./post.js";
+import { login } from "./login.js";
+import { post, fetchAndDisplayDiscussions } from "./post.js";
+import {register} from "./register.js";
+import {startWebSocket} from "./websocket.js";
+import {logout} from "./websocket.js";
+
+document.addEventListener('DOMContentLoaded', function () {
+    // Appeler la fonction pour récupérer et afficher les discussions initiales
+    fetchAndDisplayDiscussions();
+    // Gérer le clic sur le titre de chaque discussion pour afficher le message
+});
 
 window.onload = function () {
     const username = getCookie("username");
-
     if (username) {
-
-        const header = document.querySelector("header");
-        header.style.display = "block";
-        const titleDiv = document.getElementById("title");
-        const existingText = titleDiv.innerHTML;
-        titleDiv.innerHTML = existingText + " - " + username;
-        showDiv("home")
+        startWebSocket()
+        showDiv("home");
     }
-};
+}
 
 document
     .getElementById("Forum")
