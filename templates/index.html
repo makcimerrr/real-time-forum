@@ -1,18 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Real Time Forum</title>
-    <style>
-      .registrationForm,
-      .home,
-      .loginForm,
-      .creatediscussion
-      {
-        display: none;
+    <link rel="stylesheet" href="../assets/css/style.css">
+
+    <style>.registrationForm,
+    .home,
+    .loginForm,
+    .creatediscussion
+    {
+      display: none;
+
+      .post {
+        border: 1px solid #ccc;
+        margin-bottom: 10px;
+        padding: 10px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
-    </style>
+
+      .post h3 {
+        font-size: 18px;
+        margin-bottom: 8px;
+      }
+
+      .post p {
+        font-size: 14px;
+        margin-bottom: 12px;
+      }
+
+      .post .category {
+        font-style: italic;
+        color: #888;
+      }
+
+    }</style>
+
   </head>
 
   <body>
@@ -77,10 +104,16 @@
           <button type="submit">S'inscrire</button>
         </form>
       </div>
+      <div id="discussionList">
 
       <div class="home">
+
         <a onclick="showDiv('creatediscussion')">Add a Post </a>
+
         <a id="Logout">logout </a>
+
+
+
 
 
         <div class="title"></div>
@@ -104,11 +137,15 @@
             <option value="voyage">Voyage</option>
             <!-- Ajoutez d'autres options de catégorie ici --></select
           ><br />
-          <input type="submit" value="Create Discussion" href="/">
+          <input type="submit" value="Create Discussion">
+          <a onclick="showDiv('home')">Home </a>
 
-            <a href="/">Back to Home</a>
-          </div>
-        </form>
+
+
+      </div>
+
+      </form>
+
       </div>
 
       <script src="/static/js/script.js"></script>

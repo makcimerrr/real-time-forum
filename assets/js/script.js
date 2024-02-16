@@ -1,4 +1,3 @@
-function WebSocketManager(user) {}
 
 // Fonction pour obtenir la valeur d'un cookie en fonction de son nom
 function getCookie(name) {
@@ -228,18 +227,10 @@ function showDiv(divName) {
   }
 }
 
-document
-  .getElementById("creatediscussion")
-  .addEventListener("submit", function (event) {
-    // Empêcher le comportement de soumission par défaut
-    event.preventDefault();
 
-    // Appeler la fonction registerUser de votre script JavaScript
-    submitDiscussionForm();
-  });
 
-/*function submitDiscussionForm() {
-  // Récupérer le formulaire par son ID
+function submitDiscussionForm() {
+console.log("test3")  // Récupérer le formulaire par son ID
   var discussionForm = document.getElementById("creatediscussion");
 
   // Récupérer les valeurs des champs du formulaire
@@ -259,27 +250,82 @@ document
   };
 
 
-
- // Envoyer les données de discussion via WebSocket
-  socket.onopen = function () {
-    socket.send(JSON.stringify(discussionData));
-  };
-  console.log("2");
-
   // C'est une notification, afficher la notification de succès
   console.log("Discussion Created:");
+  return discussionData
 
-  showDiv("home");
-}*/
+}
 
 function connection(name,token) {
   setCookie(name,token)
+  var socket = new WebSocket("ws://localhost:8080/socket"); //make sure the port matches with your golang code
+
+  socket.addEventListener('open', (event) => {
+    console.log('WebSocket connection opened:', event);
+
+  })
+  WebsocketSwitchCase(socket)
+
+  socket.addEventListener('close', (event) => {
+    console.log('WebSocket connection closed:', event);
+  });
 
 
-  // Établir une connexion WebSocket
-  //var socket = new WebSocket("ws://" + window.location.host + "/ws");
+
+
+
 
 }
+
+function WebsocketSwitchCase(socket) {
+
+  document
+      .addEventListener("submit", function (event) {
+
+        // Empêcher le comportement de soumission par défaut
+        event.preventDefault();
+        // Appeler la fonction registerUser de votre script JavaScript
+        INFO = submitDiscussionForm();
+      console.log(INFO)
+        socket.send(JSON.stringify(INFO));
+
+
+
+
+
+      });
+
+  socket.addEventListener('message', function (event) {
+    var responseData = JSON.parse(event.data);
+    console.log("Received response from server:", responseData);
+    displayPost(responseData);
+    // Ajoutez ici le code pour traiter la réponse selon vos besoins
+    // Par exemple, mettre à jour l'interface utilisateur avec la réponse
+  })
+
+
+
+
+
+
+}
+
+function displayPost(messageData) {
+  var discussionListDiv = document.getElementById("discussionList");
+
+  for (var i = 0; i < messageData.length; i++) {
+    var discussionDiv = document.createElement("div");
+    discussionDiv.classList.add("post");
+
+    var discussionContentDiv = document.createElement("div");
+    discussionContentDiv.innerHTML = messageData[i];
+
+    discussionDiv.appendChild(discussionContentDiv);
+    discussionListDiv.appendChild(discussionDiv);
+  }
+}
+
+
 
 
 function setCookie(name,token) {

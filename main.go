@@ -18,11 +18,6 @@ import (
 	"text/template"
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-}
-
 var templates = template.Must(template.ParseGlob("templates/*.html"))
 var db *sql.DB
 
@@ -42,12 +37,12 @@ type User struct {
 	Category      string `json:"category"`
 }
 
-// type Discussion struct {
-// 	Username string `json:"username"`
-// 	Title    string `json:"title"`
-// 	Text  string `json:"message"`
-// 	Category string `json:"category"`
-// }
+type Discussion struct {
+	Username string `json:"username"`
+	Title    string `json:"title"`
+	Text     string `json:"message"`
+	Category string `json:"category"`
+}
 
 // type WebSocketMessage struct {
 // 	Type string      `json:"type"`
@@ -236,8 +231,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if CheckMDP == true {
 		fmt.Println("MATCHING PASSWORD")
 		tokencrypt, _ = CreateAndSetSessionCookies(w, user.LoginUser)
-		fmt.Println(tokencrypt)
-
 	} else {
 		formError = append(formError, "Wrong password !")
 	}
@@ -288,8 +281,88 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Erreur lors de l'écriture de la réponse JSON", http.StatusInternalServerError)
 			return
 		}
+		http.HandleFunc("/socket", WebSocketManager)
 	}
 
+}
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
+
+func WebSocketManager(w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer conn.Close()
+
+	for {
+		// Lire le message du client
+		messageType, p, err := conn.ReadMessage()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		// Décodez le message JSON en une map[string]interface{}
+		var PostData map[string]interface{}
+		err = json.Unmarshal(p, &PostData)
+		if err != nil {
+			fmt.Println("Error decoding JSON:", err)
+			continue
+		}
+
+		// Accéder au champ 'type'
+		receivedType, ok := PostData["type"].(string)
+		if !ok {
+			fmt.Println("Error accessing 'type' field in JSON")
+			continue
+		}
+
+		// Prendre des décisions basées sur la valeur du champ 'type'
+		switch receivedType {
+		case "createDiscussion":
+			// Action spécifique pour 'createDiscussion'
+
+			alldiscussion := CreateDiscussionRequest(PostData, r)
+
+			jsonData, err := json.Marshal(alldiscussion)
+			if err != nil {
+				fmt.Println("Error marshaling JSON:", err)
+				return
+			}
+
+			// Envoyer les données JSON via WebSocket
+			if err := conn.WriteMessage(messageType, jsonData); err != nil {
+				fmt.Println("Error sending WebSocket message:", err)
+				return
+			}
+
+		case "autreType":
+			// Action spécifique pour un autre type
+			fmt.Println("Handling 'autreType'")
+			// ...
+
+			// Répondre au client (vous pouvez personnaliser cette logique)
+			if err := conn.WriteMessage(messageType, p); err != nil {
+				fmt.Println(err)
+				return
+			}
+		default:
+			fmt.Println("Unknown type:", messageType)
+			// Action par défaut pour un type inconnu
+			// ...
+
+			// Répondre au client (vous pouvez personnaliser cette logique)
+			if err := conn.WriteMessage(messageType, p); err != nil {
+				fmt.Println(err)
+				return
+			}
+		}
+	}
 }
 
 func generateSessionToken() (string, error) {
@@ -355,71 +428,60 @@ func CreateAndSetSessionCookies(w http.ResponseWriter, username string) (string,
 	}
 }
 
-func CreateDiscussionRequest(conn *websocket.Conn, user User, r *http.Request) {
+func CreateDiscussionRequest(PostData map[string]interface{}, r *http.Request) []string {
 	// Récupérer tous les cookies de la requête
-	usernameCookie, err := r.Cookie("username")
-	if err != nil {
-		log.Println(err)
-		return
+	var username string
+	// Utiliser la valeur du cookie "username"
+	cookies := r.Cookies()
+
+	for _, cookie := range cookies {
+		username = cookie.Name
+
 	}
 
-	// Utiliser la valeur du cookie "username"
-	username := usernameCookie.Value
-
-	title := user.Title
-	message := user.Text
-	category := user.Category
+	title := PostData["title"].(string)
+	message := PostData["text"].(string)
+	category := PostData["category"].(string)
 
 	// Ouverture de la connexion à la base de données
-	db, err := sql.Open("sqlite", "database/data.db")
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	defer db.Close()
 
 	// Insérez la nouvelle discussion dans la base de données, y compris la catégorie
-	_, err = db.Exec("INSERT INTO post (username, title, message, catégorie) VALUES (?, ?, ?, ?)", username, title, message, category)
+	db.Exec("INSERT INTO post (username,title, message, catégorie) VALUES (?, ?, ?, ?)", username, title, message, category)
 
-	if err != nil {
-		log.Println(err)
-		return
-	}
+	AllDiscussion := fetchRecentDiscussionsFromDatabase()
+
+	return AllDiscussion
 
 }
 
-// func fetchRecentDiscussionsFromDatabase() []Discussion {
-//     fmt.Println("TESTTTT1")
-//     db, err := sql.Open("sqlite", "database/data.db")
-//     if err != nil {
-//         log.Println("Error opening database:", err)
-//         return nil
-//     }
-//     defer db.Close()
+func fetchRecentDiscussionsFromDatabase() []string {
+	rows, err := db.Query("SELECT username, title, message, catégorie FROM post ")
+	if err != nil {
+		log.Println("Error querying database:", err)
+		return nil
+	}
+	defer rows.Close()
 
-//     rows, err := db.Query("SELECT username, title, message, category FROM post ORDER BY timestamp DESC LIMIT 10")
-//     if err != nil {
-//         log.Println("Error querying database:", err)
-//         return nil
-//     }
-//     defer rows.Close()
-//     fmt.Println("TESTTTT2")
+	var recentDiscussionData []string
 
-//     var recentDiscussions []Discussion
+	for rows.Next() {
+		var discussion Discussion
+		err := rows.Scan(&discussion.Username, &discussion.Title, &discussion.Text, &discussion.Category)
+		if err != nil {
+			log.Println("Error scanning rows:", err)
+			continue
+		}
 
-//     for rows.Next() {
-//         var discussion Discussion
-//         err := rows.Scan(&discussion.Username, &discussion.Title, &discussion.Text, &discussion.Category)
-//         if err != nil {
-//             log.Println("Error scanning rows:", err)
-//             continue
-//         }
-//         recentDiscussions = append(recentDiscussions, discussion)
-//     }
+		// Concaténer les champs de discussion en une chaîne de caractères
+		discussionData := fmt.Sprintf("Username: %s, Title: %s, Text: %s, Category: %s",
+			discussion.Username, discussion.Title, discussion.Text, discussion.Category)
 
-//     fmt.Println("TESTTTT3")
-//     return recentDiscussions
-// }
+		// Ajouter la chaîne de caractères à la slice
+		recentDiscussionData = append(recentDiscussionData, discussionData)
+	}
+
+	return recentDiscussionData
+}
 
 // func sendRecentDiscussions(conn *websocket.Conn) {
 //     fmt.Println("Sending recent discussions")
