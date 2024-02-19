@@ -36,7 +36,7 @@ export async function post() {
 }
 
 export async function fetchAndDisplayDiscussions(discussion = null) {
-    if (discussion !== null) {
+    /*if (discussion !== null) {
         const Alldiscussions = document.getElementById('Alldiscussions');
 
         const discussionDiv = document.createElement('div');
@@ -68,7 +68,7 @@ export async function fetchAndDisplayDiscussions(discussion = null) {
 
         // Ajouter la div de discussion à la liste des utilisateurs
         Alldiscussions.appendChild(discussionDiv);
-    } else {
+    } else {*/
         try {
             const response = await fetch('/getDiscussions'); // Endpoint à définir côté serveur pour récupérer les discussions
             if (response.ok) {
@@ -80,31 +80,51 @@ export async function fetchAndDisplayDiscussions(discussion = null) {
                 discussions.forEach(function (discussion) {
                     // Créer une div pour chaque discussion
                     const discussionDiv = document.createElement('div');
+                    discussionDiv.classList.add('Post');
                     discussionDiv.id = `discussion-${discussion.id}`;
 
                     // Créer et ajouter un titre h1 pour le nom de l'utilisateur
                     const userHeading = document.createElement('h1');
-                    userHeading.classList.add(`discussionUser-${discussion.id}`);
+                    userHeading.classList.add('discussionUser');
                     userHeading.textContent = `User: ${discussion.username}`;
                     discussionDiv.appendChild(userHeading);
 
                     // Créer et ajouter un titre h2 pour le titre de la discussion
                     const titleHeading = document.createElement('h2');
                     titleHeading.textContent = `Title: ${discussion.title}`;
-                    titleHeading.classList.add(`discussionTitle-${discussion.id}`);
+                    titleHeading.classList.add('discussionTitle');
                     discussionDiv.appendChild(titleHeading);
 
                     // Créer et ajouter un paragraphe pour la catégorie
                     const categoryParagraph = document.createElement('p');
                     categoryParagraph.textContent = `Category: ${discussion.category}`;
-                    categoryParagraph.classList.add(`discussionCategory-${discussion.id}`);
+                    categoryParagraph.classList.add('discussionCategory');
                     discussionDiv.appendChild(categoryParagraph);
 
                     // Créer et ajouter un paragraphe pour le message
                     const messageParagraph = document.createElement('p');
                     messageParagraph.textContent = `Message: ${discussion.message}`;
-                    messageParagraph.classList.add(`discussionMessage-${discussion.id}`);
+                    messageParagraph.classList.add('discussionMessage');
+                    messageParagraph.style.display = 'none'; // Masquer le message par défaut
                     discussionDiv.appendChild(messageParagraph);
+
+                    const AddComment = document.createElement('button')
+                    AddComment.textContent = 'Add Comment'
+                    AddComment.classList.add('AddComment')
+                    AddComment.style.display = 'none'; // Masquer le message par défaut
+                    discussionDiv.appendChild(AddComment)
+
+                    // Ajouter un gestionnaire d'événements au titre pour afficher/cacher le message
+                    titleHeading.addEventListener('click', function () {
+                        const messageDiv = discussionDiv.querySelector(`.discussionMessage`);
+                        if (messageDiv.style.display === 'none') {
+                            messageDiv.style.display = 'block';
+                            AddComment.style.display = 'block';
+                        } else {
+                            messageDiv.style.display = 'none';
+                            AddComment.style.display = 'none';
+                        }
+                    });
 
                     // Ajouter la div de discussion à la liste des utilisateurs
                     Alldiscussions.appendChild(discussionDiv);
@@ -115,7 +135,6 @@ export async function fetchAndDisplayDiscussions(discussion = null) {
         } catch (error) {
             console.error('Erreur :', error);
         }
-    }
 }
 
 

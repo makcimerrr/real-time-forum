@@ -45,7 +45,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			log.Fatal(errors)
 		} else {
-			broadcast <- postData
+			broadcastPost <- postData
 
 			jsonResponse := map[string]interface{}{
 				"success": true,

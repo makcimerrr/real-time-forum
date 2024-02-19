@@ -35,9 +35,8 @@ export function showDiv(divName) {
             const header = document.querySelector("header");
             header.style.display = "block";
             const titleDiv = document.getElementById("title");
-            const existingText = titleDiv.innerHTML;
             titleDiv.innerHTML = ''
-            titleDiv.innerHTML = existingText + " - " + username;
+            titleDiv.innerHTML = "Home - " + username;
         }
         selectedDiv.style.display = 'block';
     }

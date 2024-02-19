@@ -13,8 +13,8 @@ var (
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	}
-	clients   = make(map[*websocket.Conn]bool)
-	broadcast = make(chan Post)
+	clients       = make(map[*websocket.Conn]bool)
+	broadcastPost = make(chan Post)
 )
 
 func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
@@ -34,13 +34,13 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			delete(clients, conn)
 			return
 		}
-		broadcast <- post
+		broadcastPost <- post
 	}
 }
 
 func handleMessages() {
 	for {
-		post := <-broadcast
+		post := <-broadcastPost
 		for client := range clients {
 			err := client.WriteJSON(post)
 			if err != nil {

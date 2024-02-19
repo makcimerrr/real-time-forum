@@ -29,7 +29,7 @@ export function startWebSocket() {
             const discussion = JSON.parse(event.data);
             console.log(discussion)
             // Mettre à jour l'interface utilisateur avec la nouvelle discussion
-            fetchAndDisplayDiscussions(discussion);
+            fetchAndDisplayDiscussions();
         };
 
         NewWebsocket.onclose = function (event) {
