@@ -238,9 +238,6 @@ console.log("test3")  // Récupérer le formulaire par son ID
   var text = discussionForm.elements["message"].value;
   var category = discussionForm.elements["category"].value;
 
-  console.log(title);
-  console.log(text);
-  console.log(category);
 
   var discussionData = {
     type: "createDiscussion",
@@ -248,6 +245,8 @@ console.log("test3")  // Récupérer le formulaire par son ID
     text: text,
     category: category,
   };
+
+
 
 
   // C'est une notification, afficher la notification de succès
@@ -297,7 +296,9 @@ function WebsocketSwitchCase(socket) {
 
   socket.addEventListener('message', function (event) {
     var responseData = JSON.parse(event.data);
-    console.log("Received response from server:", responseData);
+    //console.log("Received response from server:", responseData);
+    console.log(responseData)
+    console.log("TESTTTTESTESTTESTSETSETESTSTSETS")
     displayPost(responseData);
     // Ajoutez ici le code pour traiter la réponse selon vos besoins
     // Par exemple, mettre à jour l'interface utilisateur avec la réponse
@@ -311,18 +312,44 @@ function WebsocketSwitchCase(socket) {
 }
 
 function displayPost(messageData) {
-  var discussionListDiv = document.getElementById("discussionList");
+  messageData.forEach(function (Post) {
+    var discussionListDiv = document.getElementById("discussionList");
 
-  for (var i = 0; i < messageData.length; i++) {
-    var discussionDiv = document.createElement("div");
-    discussionDiv.classList.add("post");
+    var discussions = document.createElement("div");
+    discussions.classList.add("post");
+    discussions.id = `${Post.id}`
 
-    var discussionContentDiv = document.createElement("div");
-    discussionContentDiv.innerHTML = messageData[i];
+    var title = document.createElement("h1");
+    title.classList.add("title");
+    title.textContent = `Title: ${Post.title}`
+    discussions.appendChild(title)
 
-    discussionDiv.appendChild(discussionContentDiv);
-    discussionListDiv.appendChild(discussionDiv);
-  }
+    var username = document.createElement("h2")
+    username.classList.add("username");
+    username.textContent = `Username: ${Post.username}`
+    discussions.appendChild(username)
+
+    var message = document.createElement("h2")
+    message.classList.add("message");
+    message.textContent = `Message: ${Post.message}`
+    discussions.appendChild(message)
+
+    var category = document.createElement("h2")
+    category.classList.add("category");
+    category.textContent = `Category: ${Post.category}`
+    discussions.appendChild(category)
+
+
+
+    discussionListDiv.appendChild(discussions)
+      }
+
+  )
+
+
+
+
+
 }
 
 

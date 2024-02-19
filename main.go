@@ -38,6 +38,7 @@ type User struct {
 }
 
 type Discussion struct {
+	Id       int    `json:"id"`
 	Username string `json:"username"`
 	Title    string `json:"title"`
 	Text     string `json:"message"`
@@ -59,6 +60,7 @@ func main() {
 
 	http.HandleFunc("/register", RegisterHandler)
 	http.HandleFunc("/login", LoginHandler)
+	http.HandleFunc("/socket", WebSocketManager)
 	http.HandleFunc("/", indexHandler)
 
 	// Définir le dossier "static" comme dossier de fichiers statiques
@@ -281,7 +283,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Erreur lors de l'écriture de la réponse JSON", http.StatusInternalServerError)
 			return
 		}
-		http.HandleFunc("/socket", WebSocketManager)
 	}
 
 }
@@ -326,10 +327,11 @@ func WebSocketManager(w http.ResponseWriter, r *http.Request) {
 		switch receivedType {
 		case "createDiscussion":
 			// Action spécifique pour 'createDiscussion'
+			var recentDiscussionData []Discussion
 
-			alldiscussion := CreateDiscussionRequest(PostData, r)
+			recentDiscussionData = CreateDiscussionRequest(PostData, r)
 
-			jsonData, err := json.Marshal(alldiscussion)
+			jsonData, err := json.Marshal(recentDiscussionData)
 			if err != nil {
 				fmt.Println("Error marshaling JSON:", err)
 				return
@@ -428,7 +430,7 @@ func CreateAndSetSessionCookies(w http.ResponseWriter, username string) (string,
 	}
 }
 
-func CreateDiscussionRequest(PostData map[string]interface{}, r *http.Request) []string {
+func CreateDiscussionRequest(PostData map[string]interface{}, r *http.Request) []Discussion {
 	// Récupérer tous les cookies de la requête
 	var username string
 	// Utiliser la valeur du cookie "username"
@@ -454,30 +456,26 @@ func CreateDiscussionRequest(PostData map[string]interface{}, r *http.Request) [
 
 }
 
-func fetchRecentDiscussionsFromDatabase() []string {
-	rows, err := db.Query("SELECT username, title, message, catégorie FROM post ")
+func fetchRecentDiscussionsFromDatabase() []Discussion {
+	rows, err := db.Query("SELECT ID,username, title, message, catégorie FROM post ")
 	if err != nil {
 		log.Println("Error querying database:", err)
 		return nil
 	}
 	defer rows.Close()
 
-	var recentDiscussionData []string
+	var recentDiscussionData []Discussion
 
 	for rows.Next() {
-		var discussion Discussion
-		err := rows.Scan(&discussion.Username, &discussion.Title, &discussion.Text, &discussion.Category)
+		var discussions Discussion
+		err := rows.Scan(&discussions.Id, &discussions.Username, &discussions.Title, &discussions.Text, &discussions.Category)
 		if err != nil {
 			log.Println("Error scanning rows:", err)
 			continue
 		}
 
-		// Concaténer les champs de discussion en une chaîne de caractères
-		discussionData := fmt.Sprintf("Username: %s, Title: %s, Text: %s, Category: %s",
-			discussion.Username, discussion.Title, discussion.Text, discussion.Category)
-
 		// Ajouter la chaîne de caractères à la slice
-		recentDiscussionData = append(recentDiscussionData, discussionData)
+		recentDiscussionData = append(recentDiscussionData, discussions)
 	}
 
 	return recentDiscussionData
