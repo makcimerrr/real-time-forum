@@ -22,7 +22,6 @@ export async function post() {
         if (response.ok) {
             const responseData = await response.json();
             if (responseData.success) {
-                console.log("postID", responseData.postID)
                 showDiv("home")
             } else {
                 document.getElementById('errorMessageLogin').innerText = responseData.message;

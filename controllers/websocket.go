@@ -13,34 +13,40 @@ var (
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	}
-	clients       = make(map[*websocket.Conn]bool)
-	broadcastPost = make(chan Post)
+	// clients est une carte qui associe chaque connexion WebSocket à ses données utilisateur
+	clients   = make(map[*websocket.Conn]bool)
+	broadcast = make(chan WebsocketMessage)
 )
+
+type WebsocketMessage struct {
+	Type string      `json:"type"`
+	Data interface{} `json:"data"`
+}
 
 func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrade.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println(err)
-		return
+		log.Fatal(err)
 	}
+	defer conn.Close()
 
+	// Ajouter la connexion à la carte des clients
 	clients[conn] = true
 
 	for {
-		var post Post
-		err := conn.ReadJSON(&post)
+		var message WebsocketMessage
+		err := conn.ReadJSON(&message)
 		if err != nil {
 			log.Println(err)
 			delete(clients, conn)
-			return
+			break
 		}
-		broadcastPost <- post
 	}
 }
 
 func handleMessages() {
 	for {
-		post := <-broadcastPost
+		post := <-broadcast
 		for client := range clients {
 			err := client.WriteJSON(post)
 			if err != nil {
