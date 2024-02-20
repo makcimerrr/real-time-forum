@@ -45,11 +45,6 @@ type Discussion struct {
 	Category string `json:"category"`
 }
 
-// type WebSocketMessage struct {
-// 	Type string      `json:"type"`
-// 	Data interface{} `json:"data"`
-// }
-
 func main() {
 	var err error
 	db, err = sql.Open("sqlite3", "database/data.db")
@@ -292,6 +287,16 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
+// Define ConnectedUser struct outside the WebSocketManager function
+type ConnectedUser struct {
+	connections map[*websocket.Conn]bool
+}
+
+// Create a global instance of ConnectedUser
+var manager = ConnectedUser{
+	connections: make(map[*websocket.Conn]bool),
+}
+
 func WebSocketManager(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -300,15 +305,16 @@ func WebSocketManager(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
+	// Add the connection to the manager
+	manager.addConnection(conn)
+
 	for {
-		// Lire le message du client
 		messageType, p, err := conn.ReadMessage()
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 
-		// Décodez le message JSON en une map[string]interface{}
 		var PostData map[string]interface{}
 		err = json.Unmarshal(p, &PostData)
 		if err != nil {
@@ -316,53 +322,57 @@ func WebSocketManager(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		// Accéder au champ 'type'
 		receivedType, ok := PostData["type"].(string)
 		if !ok {
 			fmt.Println("Error accessing 'type' field in JSON")
 			continue
 		}
 
-		// Prendre des décisions basées sur la valeur du champ 'type'
 		switch receivedType {
 		case "createDiscussion":
-			// Action spécifique pour 'createDiscussion'
 			var recentDiscussionData []Discussion
-
 			recentDiscussionData = CreateDiscussionRequest(PostData, r)
-
 			jsonData, err := json.Marshal(recentDiscussionData)
 			if err != nil {
 				fmt.Println("Error marshaling JSON:", err)
 				return
 			}
-
-			// Envoyer les données JSON via WebSocket
-			if err := conn.WriteMessage(messageType, jsonData); err != nil {
-				fmt.Println("Error sending WebSocket message:", err)
-				return
-			}
+			// Broadcast the message to all connections
+			manager.broadcastMessage(messageType, jsonData)
 
 		case "autreType":
-			// Action spécifique pour un autre type
 			fmt.Println("Handling 'autreType'")
-			// ...
-
-			// Répondre au client (vous pouvez personnaliser cette logique)
 			if err := conn.WriteMessage(messageType, p); err != nil {
 				fmt.Println(err)
 				return
 			}
 		default:
 			fmt.Println("Unknown type:", messageType)
-			// Action par défaut pour un type inconnu
-			// ...
-
-			// Répondre au client (vous pouvez personnaliser cette logique)
 			if err := conn.WriteMessage(messageType, p); err != nil {
 				fmt.Println(err)
 				return
 			}
+		}
+	}
+}
+
+var NbrOfUser = 0
+
+// Add the connection to the ConnectedUser manager
+func (cu *ConnectedUser) addConnection(conn *websocket.Conn) {
+	cu.connections[conn] = true
+	NbrOfUser++
+	fmt.Println(NbrOfUser)
+}
+
+// Broadcast the message to all connected clients
+func (cu *ConnectedUser) broadcastMessage(messageType int, message []byte) {
+	fmt.Println("1x")
+	for c := range cu.connections {
+		err := c.WriteMessage(messageType, message)
+		if err != nil {
+			fmt.Println("Error sending WebSocket message:", err)
+			delete(cu.connections, c)
 		}
 	}
 }
@@ -480,27 +490,3 @@ func fetchRecentDiscussionsFromDatabase() []Discussion {
 
 	return recentDiscussionData
 }
-
-// func sendRecentDiscussions(conn *websocket.Conn) {
-//     fmt.Println("Sending recent discussions")
-//     recentDiscussions := fetchRecentDiscussionsFromDatabase()
-
-//     message := WebSocketMessage{
-//         Type: "discussionList",
-//         Data: recentDiscussions,
-//     }
-
-//     jsonMessage, err := json.Marshal(message)
-//     if err != nil {
-//         log.Println(err)
-//         return
-//     }
-
-//     err = conn.WriteMessage(websocket.TextMessage, jsonMessage)
-//     if err != nil {
-//         log.Println(err)
-//         return
-//     }
-
-//     fmt.Println("Recent discussions sent successfully")
-// }

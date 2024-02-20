@@ -260,10 +260,44 @@ function connection(name,token) {
   var socket = new WebSocket("ws://localhost:8080/socket"); //make sure the port matches with your golang code
 
   socket.addEventListener('open', (event) => {
+
     console.log('WebSocket connection opened:', event);
 
   })
-  WebsocketSwitchCase(socket)
+
+  document
+      .addEventListener("submit", function (event) {
+
+        // Empêcher le comportement de soumission par défaut
+        event.preventDefault();
+        // Appeler la fonction registerUser de votre script JavaScript
+        INFO = submitDiscussionForm();
+       // console.log(INFO)
+        socket.send(JSON.stringify(INFO));
+        showDiv("home");
+
+
+
+
+
+
+      });
+
+  socket.addEventListener('message', function (event) {
+    var responseData = JSON.parse(event.data);
+    //console.log("Received response from server:", responseData);
+    //console.log(responseData)
+    displayPost(responseData);
+
+
+
+
+    // Ajoutez ici le code pour traiter la réponse selon vos besoins
+    // Par exemple, mettre à jour l'interface utilisateur avec la réponse
+  })
+
+
+
 
   socket.addEventListener('close', (event) => {
     console.log('WebSocket connection closed:', event);
@@ -276,44 +310,11 @@ function connection(name,token) {
 
 }
 
-function WebsocketSwitchCase(socket) {
 
-  document
-      .addEventListener("submit", function (event) {
-
-        // Empêcher le comportement de soumission par défaut
-        event.preventDefault();
-        // Appeler la fonction registerUser de votre script JavaScript
-        INFO = submitDiscussionForm();
-      console.log(INFO)
-        socket.send(JSON.stringify(INFO));
-
-
-
-
-
-      });
-
-  socket.addEventListener('message', function (event) {
-    var responseData = JSON.parse(event.data);
-    //console.log("Received response from server:", responseData);
-    console.log(responseData)
-    console.log("TESTTTTESTESTTESTSETSETESTSTSETS")
-    displayPost(responseData);
-    // Ajoutez ici le code pour traiter la réponse selon vos besoins
-    // Par exemple, mettre à jour l'interface utilisateur avec la réponse
-  })
-
-
-
-
-
-
-}
 
 function displayPost(messageData) {
   messageData.forEach(function (Post) {
-    var discussionListDiv = document.getElementById("discussionList");
+    var discussionListDiv = document.getElementById("post");
 
     var discussions = document.createElement("div");
     discussions.classList.add("post");
