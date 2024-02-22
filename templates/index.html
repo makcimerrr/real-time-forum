@@ -8,10 +8,11 @@
     <link rel="stylesheet" href="/static/css/style.css">
 
     <style>
-      .registrationForm,
+    .registrationForm,
     .home,
     .loginForm,
-    .creatediscussion
+    .creatediscussion,
+    header
     {
       display: none;
       }
@@ -20,9 +21,15 @@
   </head>
 
   <body>
-    <header></header>
+    <header>
+      <a class="rtf">Real Time Forum</a>
+      <a class="logout" id="Logout">Logout</a>
+
+      <h1>Utilisateurs Connectés</h1>
+      <ul id="userList"></ul>
+    </header>
+
     <main>
-      <h1>Forum</h1>
 
       <div class="accueil">
         <a onclick="showDiv('loginForm')">Login</a>
@@ -41,7 +48,6 @@
             name="loginpassword"
             required
           /><br />
-
           <!-- Ajoutez cette div pour afficher les messages d'erreur -->
           <div id="errorTextLogin" style="color: red">
             <span id="errorMessageLogin"></span>
@@ -89,7 +95,6 @@
 
         <a onclick="showDiv('creatediscussion')">Add a Post </a>
 
-        <a id="Logout">logout </a>
 
 
 
