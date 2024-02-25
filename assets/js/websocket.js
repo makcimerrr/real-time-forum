@@ -29,6 +29,7 @@ export function startWebSocket() {
 
         NewWebsocket.onmessage = function (event) {
             const message = JSON.parse(event.data);
+            //console.log(message);
             if (message.type === 'post') {
                 // Vérifier si l'utilisateur actuel est l'auteur du post
                 const currentUser = getCookie("username"); // Supposons que vous stockez l'identifiant de l'utilisateur dans un cookie
@@ -39,16 +40,9 @@ export function startWebSocket() {
                 }
                 // Mettre à jour l'interface utilisateur avec la nouvelle discussion
                 fetchAndDisplayDiscussions();
-            } else if (message.type === 'onlineUser') {
-                // Traiter les données d'utilisateur en ligne
-                handleOnlineUser(message.data);
-            }else if (message.type === 'login'){
-                const currentUser = getCookie("username"); // Supposons que vous stockez l'identifiant de l'utilisateur dans un cookie
-                if (message.data.username !== currentUser) {
-                    console.log("Hey")
-                    // Si l'utilisateur actuel n'est pas l'auteur du post, affichez une notification
-                    displayNotification("User online ! " + message.data.username); // Cette fonction doit être implémentée pour afficher une notification à l'utilisateur
-                }
+            }else if (message.type === 'comment') {
+                // Mettre à jour l'interface utilisateur avec la nouvelle discussion
+                //fetchAndDisplayDiscussions();
             }
         };
 
@@ -60,4 +54,3 @@ export function startWebSocket() {
         };
     }
 }
-

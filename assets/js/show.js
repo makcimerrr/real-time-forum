@@ -22,7 +22,7 @@ export function showDiv(divName) {
     // Masquer toutes les divs
     const divs = document.querySelectorAll
     (
-        '.logout, .loginForm, .accueil, .registrationForm, .home, .createPosteForm'
+        '.logout, .loginForm, .accueil, .registrationForm, .home, .createPosteForm, .createCommentForm'
     );
     divs.forEach(function (div) {
         div.style.display = 'none';

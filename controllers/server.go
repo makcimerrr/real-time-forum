@@ -26,7 +26,7 @@ func StartServer() {
 	http.HandleFunc("/register", RegisterHandler)
 	http.HandleFunc("/ws", WebSocketHandler)
 	http.HandleFunc("/getDiscussions", getDiscussionsHandler)
-
+	http.HandleFunc("/comment/", CommentHandler)
 	go handleMessages()
 
 	fs := http.FileServer(http.Dir("assets"))

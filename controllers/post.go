@@ -20,7 +20,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	insertPost := "INSERT INTO discussion_user (username, title, message, category) VALUES (?, ?, ?, ?)"
-	_, err := Db.Exec(insertPost, postData.Username, postData.TitlePost, postData.Mesage, postData.Category)
+	_, err := Db.Exec(insertPost, postData.Username, postData.TitlePost, postData.Message, postData.Category)
 	if err != nil {
 		jsonResponse := map[string]interface{}{
 			"success": false,
@@ -59,6 +59,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+
 }
 
 func getDiscussionsHandler(w http.ResponseWriter, r *http.Request) {

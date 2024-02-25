@@ -10,7 +10,8 @@
         .registrationForm,
         .home,
         .loginForm,
-        .createPosteForm
+        .createPosteForm,
+        .createCommentForm
         {
             display: none;
         }
@@ -32,7 +33,6 @@
             <a id="loginLink" href="#">Login</a>
             <a id="registerLink" href="#">Register</a>
         </div>
-
 
         <div class="loginForm">
             <form id="loginForm">
@@ -90,7 +90,6 @@
 
         <div class="home">
                 <h3 id="title">Home</h3>
-            <div id="onlineUsersList"></div>
             <button id="createPoste">Add a post</button>
             <div id="Alldiscussions"></div>
         </div>
@@ -107,6 +106,16 @@
                 <label for="message">Message:</label>
                 <input type="text" id="message" name="message" required><br>
                 <button type="submit">Envoyer</button>
+            </form>
+        </div>
+
+        <div class="createCommentForm">
+            <form id="commentForm">
+                <label for="titleComment">Titre:</label>
+                <input type="text" id="titleComment" name="titleComment" required><br>
+                <label for="messageComment">Message:</label>
+                <input type="text" id="messageComment" name="messageComment" required><br>
+                <button class="buttonComment" type="submit">Send</button>
             </form>
         </div>
 

@@ -30,6 +30,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var truePassword []byte
 	var username string
 	var err error
+	var UserData User
 
 	if strings.Contains(loginData.LoginData, "@") {
 		// Si loginData contient un "@", alors c'est un email
@@ -40,6 +41,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		loginUsername := loginData.LoginData
 		err = Db.QueryRow("SELECT username, email, password FROM users WHERE username = ?", loginUsername).Scan(&username, &trueEmail, &truePassword)
 	}
+
+	UserData.Username = username
 
 	if err != nil {
 		jsonResponse := map[string]interface{}{
@@ -67,7 +70,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 				log.Fatal(err)
 			}
 
-			postDataLogin := WebsocketMessage{Type: "login", Data: loginData}
+			postDataLogin := WebsocketMessage{Type: "login", Data: UserData}
 			broadcast <- postDataLogin
 
 			jsonResponse := map[string]interface{}{

@@ -1,11 +1,10 @@
 package controllers
 
 import (
-	"log"
-	"net/http"
-
 	"github.com/gorilla/websocket"
 	_ "github.com/gorilla/websocket"
+	"log"
+	"net/http"
 )
 
 var (
@@ -42,13 +41,14 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
+
 }
 
 func handleMessages() {
 	for {
-		post := <-broadcast
+		message := <-broadcast
 		for client := range clients {
-			err := client.WriteJSON(post)
+			err := client.WriteJSON(message)
 			if err != nil {
 				log.Println(err)
 				client.Close()

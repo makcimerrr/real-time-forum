@@ -1,7 +1,7 @@
 import { getCookie } from "./cookie.js";
 import { showDiv } from "./show.js";
 import { login } from "./login.js";
-import { post, fetchAndDisplayDiscussions } from "./post.js";
+import {post, fetchAndDisplayDiscussions, comment} from "./post.js";
 import {register} from "./register.js";
 import {startWebSocket} from "./websocket.js";
 import {logout} from "./websocket.js";
