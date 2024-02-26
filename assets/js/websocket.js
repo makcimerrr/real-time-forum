@@ -2,6 +2,7 @@ import {deleteCookie} from "./cookie.js";
 import {fetchAndDisplayDiscussions} from "./post.js";
 import { displayNotification } from "./notif.js";
 import {getCookie} from "./cookie.js";
+import {displayUserList} from "./userList.js";
 
 let NewWebsocket;
 
@@ -44,24 +45,8 @@ export function startWebSocket() {
             }else if (message.type === 'comment') {
                 // Mettre à jour l'interface utilisateur avec la nouvelle discussion
                 //fetchAndDisplayDiscussions();
-            }else if (message.type === "add") {
-                // Ajouter l'utilisateur à la liste
-                var user = message.User;
-                var userListElement = document.getElementById("userList");
-                var listItem = document.createElement("li");
-                listItem.textContent = user;
-                userListElement.appendChild(listItem);
-            } else if (message.type === "remove") {
-                // Supprimer l'utilisateur de la liste
-                var user = message.User;
-                var userListElement = document.getElementById("userList");
-                var listItems = userListElement.getElementsByTagName("li");
-                for (var i = 0; i < listItems.length; i++) {
-                    if (listItems[i].textContent === user) {
-                        userListElement.removeChild(listItems[i]);
-                        break;
-                    }
-                }
+            }else if (message.type === 'login') {
+                displayUserList(message.data.connected,message.data.list)
             }
         };
 

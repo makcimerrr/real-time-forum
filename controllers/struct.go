@@ -27,6 +27,7 @@ type User struct {
 }
 
 type UserList struct {
-	Username  string `json:"username"`
-	Connected int    `json:"connected"`
+	Username  string   `json:"username"`
+	Connected int      `json:"connected"`
+	List      []string `json:"list"`
 }
