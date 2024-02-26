@@ -1,10 +1,11 @@
 import { getCookie } from "./cookie.js";
 import { showDiv } from "./show.js";
 import { login } from "./login.js";
-import {post, fetchAndDisplayDiscussions, comment} from "./post.js";
+import {post, fetchAndDisplayDiscussions} from "./post.js";
 import {register} from "./register.js";
 import {startWebSocket} from "./websocket.js";
 import {logout} from "./websocket.js";
+import {comment} from "./comment.js";
 
 document.addEventListener('DOMContentLoaded', function () {
     // Appeler la fonction pour récupérer et afficher les discussions initiales
@@ -64,4 +65,14 @@ document
 
         // Appeler la fonction login de votre script JavaScript
         post();
+    });
+
+document
+    .getElementById("commentForm")
+    .addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        let currentDiscussionId = event.target.querySelector('button[type="submit"]').id;
+
+        comment(currentDiscussionId);
     });
