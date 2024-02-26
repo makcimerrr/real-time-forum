@@ -20,11 +20,12 @@ export function logout() {
 export function startWebSocket() {
     // Vérifier si la connexion WebSocket n'est pas déjà établie
     if (!NewWebsocket) {
+        const username = getCookie("username");
         // Code JavaScript pour se connecter au serveur WebSocket et afficher la liste des utilisateurs connectés
-        NewWebsocket = new WebSocket("ws://localhost:8080/ws");
+        NewWebsocket = new WebSocket("ws://localhost:8080/ws?username=" + username);
         // Ajouter des gestionnaires d'événements pour la connexion WebSocket
         NewWebsocket.onopen = function (event) {
-            console.log('Connexion WebSocket établie');
+            console.log('Connexion WebSocket établie pour l\'utilisateur ' + username);
         };
 
         NewWebsocket.onmessage = function (event) {
@@ -43,6 +44,24 @@ export function startWebSocket() {
             }else if (message.type === 'comment') {
                 // Mettre à jour l'interface utilisateur avec la nouvelle discussion
                 //fetchAndDisplayDiscussions();
+            }else if (message.type === "add") {
+                // Ajouter l'utilisateur à la liste
+                var user = message.User;
+                var userListElement = document.getElementById("userList");
+                var listItem = document.createElement("li");
+                listItem.textContent = user;
+                userListElement.appendChild(listItem);
+            } else if (message.type === "remove") {
+                // Supprimer l'utilisateur de la liste
+                var user = message.User;
+                var userListElement = document.getElementById("userList");
+                var listItems = userListElement.getElementsByTagName("li");
+                for (var i = 0; i < listItems.length; i++) {
+                    if (listItems[i].textContent === user) {
+                        userListElement.removeChild(listItems[i]);
+                        break;
+                    }
+                }
             }
         };
 
