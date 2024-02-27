@@ -12,7 +12,9 @@
     .home,
     .loginForm,
     .creatediscussion,
-    header
+    .logout,
+    .watchthepost
+    
     {
       display: none;
       }
@@ -25,8 +27,6 @@
       <a class="rtf">Real Time Forum</a>
       <a class="logout" id="Logout">Logout</a>
 
-      <h1>Utilisateurs Connectés</h1>
-      <ul id="userList"></ul>
     </header>
 
     <main>
@@ -88,22 +88,17 @@
         </form>
       </div>
       <div id="discussionList">
-        <div id="post">
+      
+      <div id="post">
 
       <div class="home">
 
 
         <a onclick="showDiv('creatediscussion')">Add a Post </a>
-
-
-
-
-
-
         <div class="title"></div>
-
-
       </div>
+
+    
 
       <div class="creatediscussion">
         <h1>Write a Discussion</h1>
@@ -123,13 +118,12 @@
           ><br />
           <input type="submit" value="Create Discussion">
           <a onclick="showDiv('home')">Home </a>
-
-
-
+      </div>
+      </form>
       </div>
 
-      </form>
-
+      <div class="watchthepost">
+        <!-- Content for watching the post goes here -->
       </div>
 
       <script src="/static/js/script.js"></script>

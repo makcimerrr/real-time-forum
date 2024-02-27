@@ -14,7 +14,6 @@ import (
 	"log"
 	"net/http"
 	"realtimeforum/Golang"
-
 	"text/template"
 )
 
@@ -37,6 +36,11 @@ type User struct {
 	Category      string `json:"category"`
 }
 
+type Response struct {
+    Type string      `json:"type"`
+    Data interface{} `json:"data"`
+}
+
 type Discussion struct {
 	Id       int    `json:"id"`
 	Username string `json:"username"`
@@ -56,6 +60,7 @@ func main() {
 	http.HandleFunc("/register", RegisterHandler)
 	http.HandleFunc("/login", LoginHandler)
 	http.HandleFunc("/socket", WebSocketManager)
+	//http.HandleFunc("/logout",LougoutManager)
 	http.HandleFunc("/", indexHandler)
 
 	// Définir le dossier "static" comme dossier de fichiers statiques
@@ -282,6 +287,21 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// func LougoutManager(w http.ResponseWriter, r *http.Request) {
+	
+// 	info, err := ioutil.ReadAll(r.Body)
+// 	if err != nil {
+// 		http.Error(w, "Erreur de lecture du corps de la requête", http.StatusInternalServerError)
+// 	 	return
+// 	 }
+// 	 fmt.Println(info)
+
+
+// }
+
+
+
+
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
@@ -289,13 +309,72 @@ var upgrader = websocket.Upgrader{
 
 // Define ConnectedUser struct outside the WebSocketManager function
 type ConnectedUser struct {
-	connections map[*websocket.Conn]bool
+	connections map[*websocket.Conn]string
 }
 
 // Create a global instance of ConnectedUser
 var manager = ConnectedUser{
-	connections: make(map[*websocket.Conn]bool),
+	connections: make(map[*websocket.Conn]string),
 }
+
+var NbrOfUser = 0
+
+// Add the connection to the ConnectedUser manager
+func (cu *ConnectedUser) addConnection(conn *websocket.Conn, username string) {
+	cu.connections[conn] = username
+	for i := 0; i < len(cu.connections);i++ {
+		fmt.Println(cu.connections[conn])
+	} 
+	fmt.Println(cu.connections)
+	NbrOfUser++
+	fmt.Println("User connected:", username)
+	fmt.Println("Total Users:", NbrOfUser)
+}
+
+
+
+// Broadcast the message to all connected clients
+func (cu *ConnectedUser) broadcastMessage(messageType int, message []byte) {
+	for c := range cu.connections {
+
+		err := c.WriteMessage(messageType, message)
+		if err != nil {
+			fmt.Println("Error sending WebSocket message:", err)
+			delete(cu.connections, c)
+			fmt.Println("TESTTTT DECONEXION")
+		}
+	}
+}
+
+func (cu *ConnectedUser) removeConnection(conn *websocket.Conn) {
+    username, ok := cu.connections[conn]
+    if !ok {
+        fmt.Println("Connection not found for removal.")
+        return
+    }
+
+    delete(cu.connections, conn)
+
+	for i := 0; i < len(cu.connections);i++ {
+		fmt.Println(cu.connections[conn])
+	} 
+	
+    NbrOfUser--
+	fmt.Println("User disconnected:", username)
+    fmt.Println("Total Users:", NbrOfUser)
+}
+
+func (cu *ConnectedUser) WhoIsConnected(conn *websocket.Conn) []string {
+	var usernames []string
+
+	for _, username := range cu.connections {
+		usernames = append(usernames, username)
+		
+	}
+	
+	return usernames
+}
+
 
 func WebSocketManager(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -303,17 +382,25 @@ func WebSocketManager(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 		return
 	}
-	defer conn.Close()
+	defer func() {
+		conn.Close()
+		manager.removeConnection(conn)
 
+		fmt.Println("DECOOOOOOOOOOOO")
+	}()
+	cookies := r.Cookies()
+	fmt.Println(cookies)
+	var username string
+	username = cookies[len(cookies)-1].Name
 	// Add the connection to the manager
-	manager.addConnection(conn)
-
+	manager.addConnection(conn, username)
 	for {
 		messageType, p, err := conn.ReadMessage()
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
+		 if err != nil {
+          
+            fmt.Println(err)
+            return
+        }
 
 		var PostData map[string]interface{}
 		err = json.Unmarshal(p, &PostData)
@@ -327,7 +414,7 @@ func WebSocketManager(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("Error accessing 'type' field in JSON")
 			continue
 		}
-
+		fmt.Println(receivedType)
 		switch receivedType {
 		case "createDiscussion":
 			var recentDiscussionData []Discussion
@@ -346,33 +433,50 @@ func WebSocketManager(w http.ResponseWriter, r *http.Request) {
 				fmt.Println(err)
 				return
 			}
+
+		case "showpost":
+			AllDiscussion := fetchRecentDiscussionsFromDatabase()
+			response := Response{
+				Type: "showpost",
+				Data: AllDiscussion,
+			}
+
+			jsonData, err := json.Marshal(response)
+			if err != nil {
+				fmt.Println("Error marshaling JSON:", err)
+				return
+			}
+			manager.broadcastMessage(messageType, jsonData)
+
+		case "userconnected":
+			fmt.Println("-------------------------------------------------------------------")
+			connectedUsers := manager.WhoIsConnected(conn)
+
+			response := Response{
+				Type: "userconnected",
+				Data: connectedUsers,
+			}
+		
+			// Marshal the response to JSON
+			jsonData, err := json.Marshal(response)
+			if err != nil {
+				fmt.Println("Error marshaling JSON:", err)
+				return
+			}
+		
+			// Send the response back to the client
+			if err := conn.WriteMessage(messageType, jsonData); err != nil {
+				fmt.Println(err)
+				return
+			}
+
+
 		default:
 			fmt.Println("Unknown type:", messageType)
 			if err := conn.WriteMessage(messageType, p); err != nil {
 				fmt.Println(err)
 				return
 			}
-		}
-	}
-}
-
-var NbrOfUser = 0
-
-// Add the connection to the ConnectedUser manager
-func (cu *ConnectedUser) addConnection(conn *websocket.Conn) {
-	cu.connections[conn] = true
-	NbrOfUser++
-	fmt.Println(NbrOfUser)
-}
-
-// Broadcast the message to all connected clients
-func (cu *ConnectedUser) broadcastMessage(messageType int, message []byte) {
-	fmt.Println("1x")
-	for c := range cu.connections {
-		err := c.WriteMessage(messageType, message)
-		if err != nil {
-			fmt.Println("Error sending WebSocket message:", err)
-			delete(cu.connections, c)
 		}
 	}
 }
