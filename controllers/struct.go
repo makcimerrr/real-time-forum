@@ -31,3 +31,7 @@ type UserList struct {
 	Connected int      `json:"connected"`
 	List      []string `json:"list"`
 }
+
+type DiscussionData struct {
+	Id int `json:"id"`
+}

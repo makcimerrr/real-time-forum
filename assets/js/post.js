@@ -1,6 +1,7 @@
 import {getCookie} from "./cookie.js";
 import {showDiv} from "./show.js";
 import {updateFormWithVariable} from "./comment.js";
+import {displayDiscussion} from "./discussion.js";
 
 export async function post() {
     const titlePost = document.getElementById('titlePost').value;
@@ -128,6 +129,7 @@ export async function fetchAndDisplayDiscussions(discussion = null) {
                     ShowDiscussion.addEventListener('click', function (){
                         let id = discussion.id
                         console.log("ShowDiscussion", id)
+                        displayDiscussion(id)
                     })
                     discussionDiv.appendChild(ShowDiscussion)
 
