@@ -352,6 +352,8 @@ function displayPost(messageData) {
       var postId = discussions.id;
       // Appeler une fonction ou effectuer une action avec l'ID
       handlePostClick(postId, messageData);
+      showDiv("watchthepost");
+      console.log("heloo");
     });
   });
 
@@ -376,9 +378,6 @@ function handlePostClick(postId, messageData) {
       <h2>Category: ${clickedPost.category}</h2>
       <!-- Ajoutez d'autres éléments nécessaires -->
     `;
-
-    // Faites la transition vers la classe "watchpost"
-    showDiv("watchthepost");
   } else {
     console.error("Element with ID 'watchpost' not found in the DOM.");
   }

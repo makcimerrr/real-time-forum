@@ -1,132 +1,130 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
 
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Real Time Forum</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+<head>
 
-    <style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Real Time Forum</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+
+  <style>
     .registrationForm,
     .home,
     .loginForm,
     .creatediscussion,
     .logout,
-    .watchthepost
-    
-    {
+    .watchthepost {
       display: none;
-      }
-    </style>
+    }
+  </style>
 
-  </head>
+</head>
 
-  <body>
-    <header>
-      <a class="rtf">Real Time Forum</a>
-      <a class="logout" id="Logout">Logout</a>
+<body>
+  <header>
+    <a class="rtf">Real Time Forum</a>
+    <a class="logout" id="Logout">Logout</a>
 
-    </header>
+  </header>
 
-    <main>
+  <main>
 
-      <div class="accueil">
-        <a onclick="showDiv('loginForm')">Login</a>
-        <a onclick="showDiv('registrationForm')">Register</a>
+    <div class="accueil">
+      <a onclick="showDiv('loginForm')">Login</a>
+      <a onclick="showDiv('registrationForm')">Register</a>
 
-      </div>
-      <div class="loginForm">
-        <form id="loginForm">
-          <label for="username">Username ou Email:</label>
-          <input type="text" id="loginuser" name="loginuser" required /><br />
+    </div>
+    <div class="loginForm">
+      <form id="loginForm">
+        <label for="username">Username ou Email:</label>
+        <input type="text" id="loginuser" name="loginuser" required /><br />
 
-          <label for="password">Mot de passe:</label>
-          <input
-            type="password"
-            id="loginpassword"
-            name="loginpassword"
-            required
-          /><br />
-          <!-- Ajoutez cette div pour afficher les messages d'erreur -->
-          <div id="errorTextLogin" style="color: red">
-            <span id="errorMessageLogin"></span>
-          </div>
-          <button type="submit">Se connecter</button>
-        </form>
-      </div>
-      <div class="registrationForm">
-        <form id="registrationForm">
-          <label for="username">Nom d'utilisateur:</label>
-          <input type="text" id="username" name="username" required /><br />
-
-          <label for="email">Email:</label>
-          <input type="email" id="email" name="email" required /><br />
-
-          <label for="password">Mot de passe:</label>
-          <input type="password" id="password" name="password" required /><br />
-
-          <label for="age">Age:</label>
-          <input type="number" id="age" name="age" required min="1" /><br />
-
-          <label for="gender">Genre:</label>
-          <select name="gender" id="gender">
-            <option value="male">Homme</option>
-            <option value="female">Femme</option></select
-          ><br />
-          <label for="firstName">Prénom:</label>
-          <input type="text" id="firstName" name="firstName" required /><br />
-
-          <label for="lastName">Nom de famille:</label>
-          <input type="text" id="lastName" name="lastName" required /><br />
-
-          <!-- Ajoutez cette div pour afficher les messages d'erreur -->
-          <div id="errorText" style="color: red">
-            <span id="errorMessage"></span>
-          </div>
-          <button type="submit">S'inscrire</button>
-        </form>
-      </div>
-      <div id="discussionList">
-      
-      <div id="post">
-
-      <div class="home">
-
-
-        <a onclick="showDiv('creatediscussion')">Add a Post </a>
-        <div class="title"></div>
-      </div>
-
-    
-
-      <div class="creatediscussion">
-        <h1>Write a Discussion</h1>
-        <form id="creatediscussion">
-          <label for="title">Title:</label>
-          <input type="text" id="title" name="title" required /><br />
-
-          <label for="message">Message:</label>
-          <textarea id="message" name="message" required></textarea><br />
-
-          <label for="category">Category:</label>
-          <select id="category" name="category">
-            <option value="sport">Sport</option>
-            <option value="cuisine">Cuisine</option>
-            <option value="voyage">Voyage</option>
-            <!-- Ajoutez d'autres options de catégorie ici --></select
-          ><br />
-          <input type="submit" value="Create Discussion">
-          <a onclick="showDiv('home')">Home </a>
-      </div>
+        <label for="password">Mot de passe:</label>
+        <input type="password" id="loginpassword" name="loginpassword" required /><br />
+        <!-- Ajoutez cette div pour afficher les messages d'erreur -->
+        <div id="errorTextLogin" style="color: red">
+          <span id="errorMessageLogin"></span>
+        </div>
+        <button type="submit">Se connecter</button>
       </form>
-      </div>
+    </div>
+    <div class="registrationForm">
+      <form id="registrationForm">
+        <label for="username">Nom d'utilisateur:</label>
+        <input type="text" id="username" name="username" required /><br />
 
-      <div class="watchthepost">
-        <!-- Content for watching the post goes here -->
-      </div>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required /><br />
 
-      <script src="/static/js/script.js"></script>
-    </main>
-  </body>
+        <label for="password">Mot de passe:</label>
+        <input type="password" id="password" name="password" required /><br />
+
+        <label for="age">Age:</label>
+        <input type="number" id="age" name="age" required min="1" /><br />
+
+        <label for="gender">Genre:</label>
+        <select name="gender" id="gender">
+          <option value="male">Homme</option>
+          <option value="female">Femme</option>
+        </select><br />
+        <label for="firstName">Prénom:</label>
+        <input type="text" id="firstName" name="firstName" required /><br />
+
+        <label for="lastName">Nom de famille:</label>
+        <input type="text" id="lastName" name="lastName" required /><br />
+
+        <!-- Ajoutez cette div pour afficher les messages d'erreur -->
+        <div id="errorText" style="color: red">
+          <span id="errorMessage"></span>
+        </div>
+        <button type="submit">S'inscrire</button>
+      </form>
+    </div>
+
+
+    <div class="home">
+      <a onclick="showDiv('creatediscussion')">Add a Post </a>
+      <div class="title"></div>
+
+      <div class="discussionList" id="discussionList">
+
+        <div id="post"></div>
+
+
+
+
+
+        <div class="creatediscussion">
+          <h1>Write a Discussion</h1>
+          <form id="creatediscussion">
+            <label for="title">Title:</label>
+            <input type="text" id="title" name="title" required /><br />
+
+            <label for="message">Message:</label>
+            <textarea id="message" name="message" required></textarea><br />
+
+            <label for="category">Category:</label>
+            <select id="category" name="category">
+              <option value="sport">Sport</option>
+              <option value="cuisine">Cuisine</option>
+              <option value="voyage">Voyage</option>
+              <!-- Ajoutez d'autres options de catégorie ici -->
+            </select><br />
+            <input type="submit" value="Create Discussion">
+            <a onclick="showDiv('home')">Home </a>
+          </form>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="watchthepost">
+      <!-- Content for watching the post goes here -->
+    </div>
+
+    <script src="/static/js/script.js"></script>
+  </main>
+</body>
+
 </html>
