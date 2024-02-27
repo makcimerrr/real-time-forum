@@ -120,15 +120,28 @@ export async function fetchAndDisplayDiscussions(discussion = null) {
                     })
                     discussionDiv.appendChild(AddComment)
 
+                    const ShowDiscussion = document.createElement('button')
+                    ShowDiscussion.textContent = 'Show Discussion'
+                    ShowDiscussion.classList.add('ShowDiscussion')
+                    ShowDiscussion.id = `${discussion.id}`
+                    ShowDiscussion.style.display = 'none'; // Masquer le message par défaut
+                    ShowDiscussion.addEventListener('click', function (){
+                        let id = discussion.id
+                        console.log("ShowDiscussion", id)
+                    })
+                    discussionDiv.appendChild(ShowDiscussion)
+
                     // Ajouter un gestionnaire d'événements au titre pour afficher/cacher le message
                     titleHeading.addEventListener('click', function () {
                         const messageDiv = discussionDiv.querySelector(`.discussionMessage`);
                         if (messageDiv.style.display === 'none') {
                             messageDiv.style.display = 'block';
                             AddComment.style.display = 'block';
+                            ShowDiscussion.style.display = 'block';
                         } else {
                             messageDiv.style.display = 'none';
                             AddComment.style.display = 'none';
+                            ShowDiscussion.style.display = 'none';
                         }
                     });
 
