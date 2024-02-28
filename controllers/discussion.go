@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
@@ -14,32 +13,68 @@ func displayDiscussion(w http.ResponseWriter, r *http.Request) {
 
 	var discussion DiscussionData
 
+	var isError bool
+
 	if err := json.NewDecoder(r.Body).Decode(&discussion); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	fmt.Println(discussion.Id)
+	// Exécuter la requête pour récupérer les discussions depuis la base de données
+	rows, err := Db.Query("SELECT id, username, title, message, category FROM discussion_user WHERE id = ?", discussion.Id)
+	if err != nil {
+		isError = true
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
 
-	//Todo :
-	//Recupérer les commentaires en fonction de l'id de la discussion
-	//Récupérer les autres infos de la discussion
-	//Envoyer les infos de la discussion et les commentaires
+	// Parcourir les résultats et les stocker dans une slice de discussions
+	var discussions []Discussion
+	for rows.Next() {
+		var discussion Discussion
+		if err := rows.Scan(&discussion.ID, &discussion.Username, &discussion.Title, &discussion.Message, &discussion.Category); err != nil {
+			isError = true
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		discussions = append(discussions, discussion)
+	}
 
-	if discussion.Id != 1 {
-		fmt.Println("Error 1")
+	AllComments, err := Db.Query("SELECT username, title, message FROM comments WHERE discussion_id = ?", discussion.Id)
+	if err != nil {
+		isError = true
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer AllComments.Close()
+
+	// Parcourir les résultats et les stocker dans une slice de discussions
+	var comments []CommentData
+	for AllComments.Next() {
+		var comment CommentData
+		if err := AllComments.Scan(&comment.Username, &comment.Title, &comment.Message); err != nil {
+			isError = true
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		comments = append(comments, comment)
+	}
+
+	if isError {
 		jsonResponse := map[string]interface{}{
 			"success": false,
-			"message": "Error Post Message",
+			"message": "Error Display Discussion",
 		}
 		err := json.NewEncoder(w).Encode(jsonResponse)
 		if err != nil {
 			return
 		}
 	} else {
-		fmt.Println("Error 2")
 		jsonResponse := map[string]interface{}{
-			"success": true,
+			"success":    true,
+			"discussion": discussions,
+			"comments":   comments,
 		}
 		err := json.NewEncoder(w).Encode(jsonResponse)
 		if err != nil {

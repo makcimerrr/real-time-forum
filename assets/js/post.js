@@ -130,6 +130,7 @@ export async function fetchAndDisplayDiscussions(discussion = null) {
                         let id = discussion.id
                         console.log("ShowDiscussion", id)
                         displayDiscussion(id)
+                        showDiv('showDiscussion')
                     })
                     discussionDiv.appendChild(ShowDiscussion)
 
