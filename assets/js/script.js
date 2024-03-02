@@ -213,7 +213,7 @@ function showNotification(title, message) {
 function showDiv(divName) {
   // Masquer toutes les divs
   var divs = document.querySelectorAll(
-    ".accueil, .loginForm, .registrationForm, .home, .creatediscussion, .logout , .watchthepost"
+    ".accueil, .loginForm, .registrationForm, .home, .creatediscussion, .logout , .onepostpage"
   );
   divs.forEach(function (div) {
     div.style.display = "none";
@@ -227,6 +227,12 @@ function showDiv(divName) {
     selectedDiv.style.display = "block";
 
     if (divName === "home") {
+      logoutdiv.style.display = "block";
+    }
+    if (divName === "onepostpage") {
+      logoutdiv.style.display = "block";
+    }
+    if (divName === "creatediscussion") {
       logoutdiv.style.display = "block";
     }
   }
@@ -264,10 +270,10 @@ function connection(name, token) {
     };
     socket.send(JSON.stringify(discussionData));
 
-    var userconnected = {
-      type: "userconnected",
-    };
-    socket.send(JSON.stringify(userconnected));
+    // var userconnected = {
+    //   type: "userconnected",
+    // };
+    // socket.send(JSON.stringify(userconnected));
   });
 
   document.addEventListener("submit", function (event) {
@@ -277,7 +283,11 @@ function connection(name, token) {
     INFO = submitDiscussionForm();
     // console.log(INFO)
     socket.send(JSON.stringify(INFO));
-    showDiv("home");
+
+    var discussionData = {
+      type: "showpost",
+    };
+    socket.send(JSON.stringify(discussionData));
   });
 
   socket.addEventListener("message", function (event) {
@@ -289,13 +299,10 @@ function connection(name, token) {
         displayPost(responseData.data);
         break;
       case "createDiscussionResponse":
-        // Action pour le type "createDiscussionResponse"
-        displayPost(responseData.data);
         break;
       // Ajoutez d'autres cas au besoin
 
       case "userconnected":
-        console.log("superrrrrrrr testttttttttt");
         console.log(responseData.data);
 
       default:
@@ -310,22 +317,29 @@ function connection(name, token) {
 
 function displayPost(messageData) {
   var discussionListDiv = document.getElementById("post");
+  var parentDiv = document.querySelector(".parent-container");
 
-  // Créer une nouvelle div parente
-  var parentDiv = document.createElement("div");
-  parentDiv.classList.add("parent-container");
+  // Vérifier si la div parente existe déjà
+  if (!parentDiv) {
+    // Si elle n'existe pas, créer une nouvelle div parente
+    parentDiv = document.createElement("div");
+    parentDiv.classList.add("parent-container");
+  } else {
+    // Si elle existe, effacer son contenu
+    parentDiv.innerHTML = "";
+  }
 
   messageData.forEach(function (Post) {
     var discussions = document.createElement("div");
     discussions.classList.add("post");
     discussions.id = `${Post.id}`;
-    discussions.style.border = "1px solid #ccc"; // Exemple de style
-    discussions.style.width = "25%"; // Exemple de style
+    discussions.style.border = "1px solid #ccc";
+    discussions.style.width = "25%";
 
     var title = document.createElement("h1");
     title.classList.add("title");
     title.textContent = `Title: ${Post.title}`;
-    title.style.fontSize = "20px"; // Exemple de style
+    title.style.fontSize = "20px";
     discussions.appendChild(title);
 
     var username = document.createElement("h2");
@@ -343,22 +357,20 @@ function displayPost(messageData) {
     category.textContent = `Category: ${Post.category}`;
     discussions.appendChild(category);
 
-    // Ajouter la div de discussion à la div parente
     parentDiv.appendChild(discussions);
 
-    // Ajouter un event listener à chaque élément "post"
     discussions.addEventListener("click", function () {
-      // Utiliser l'ID spécifique de l'élément cliqué
       var postId = discussions.id;
-      // Appeler une fonction ou effectuer une action avec l'ID
       handlePostClick(postId, messageData);
-      showDiv("watchthepost");
+      showDiv("onepostpage");
       console.log("heloo");
     });
   });
 
-  // Ajouter la div parente à la div principale
-  discussionListDiv.appendChild(parentDiv);
+  // Ajouter ou mettre à jour la div parente à la div principale
+  if (!document.querySelector(".parent-container")) {
+    discussionListDiv.appendChild(parentDiv);
+  }
 }
 
 function handlePostClick(postId, messageData) {
@@ -383,6 +395,16 @@ function handlePostClick(postId, messageData) {
   }
 }
 
-function setCookie(name, token) {
-  document.cookie = `${name}=${token}`;
+function setCookie(nom, valeur) {
+  document.cookie = `Username=${nom}`;
+  document.cookie = `Token=${valeur}`;
 }
+
+document
+  .getElementById("createcomments")
+  .addEventListener("submit", function (event) {
+    // Empêcher le comportement de soumission par défaut
+    event.preventDefault();
+    // Appeler la fonction registerUser de votre script JavaScript
+    loginUser();
+  });

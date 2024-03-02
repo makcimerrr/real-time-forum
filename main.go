@@ -7,14 +7,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gorilla/websocket"
-	_ "github.com/mattn/go-sqlite3"
-	"golang.org/x/crypto/bcrypt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"realtimeforum/Golang"
 	"text/template"
+
+	"github.com/gorilla/websocket"
+	_ "github.com/mattn/go-sqlite3"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var templates = template.Must(template.ParseGlob("templates/*.html"))
@@ -338,6 +339,7 @@ func (cu *ConnectedUser) broadcastMessage(messageType int, message []byte) {
 	for c := range cu.connections {
 
 		err := c.WriteMessage(messageType, message)
+		
 		if err != nil {
 			fmt.Println("Error sending WebSocket message:", err)
 			delete(cu.connections, c)
@@ -375,6 +377,32 @@ func (cu *ConnectedUser) WhoIsConnected(conn *websocket.Conn) []string {
 	return usernames
 }
 
+func GetCookies(r *http.Request) (string,string,error){
+	cookies := r.Cookies()
+	var username, token string
+
+	// Parcourir la liste des cookies
+	for _, cookie := range cookies {
+		// Vérifier le nom du cookie
+		if cookie.Name == "Username" {
+			// Traitement pour le cookie "User"
+			username = cookie.Value
+		} else if cookie.Name == "Token" {
+			// Traitement pour le cookie "Token"
+			token = cookie.Value
+		}
+		// Ajoutez d'autres conditions si vous avez plus de cookies à vérifier
+	}
+
+	if username == "" {
+        return "", "", errors.New("Cookie User non trouvé")
+    }
+    if token == "" {
+        return "", "", errors.New("Cookie Token non trouvé")
+    }
+
+	return username ,token,nil
+}
 
 func WebSocketManager(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -388,10 +416,16 @@ func WebSocketManager(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Println("DECOOOOOOOOOOOO")
 	}()
-	cookies := r.Cookies()
-	fmt.Println(cookies)
-	var username string
-	username = cookies[len(cookies)-1].Name
+	
+		username,token,err := GetCookies(r) 
+		if err != nil {
+			fmt.Println(err)
+			fmt.Println(token)
+		}
+
+
+	
+	
 	// Add the connection to the manager
 	manager.addConnection(conn, username)
 	for {
@@ -419,11 +453,13 @@ func WebSocketManager(w http.ResponseWriter, r *http.Request) {
 		case "createDiscussion":
 			var recentDiscussionData []Discussion
 			recentDiscussionData = CreateDiscussionRequest(PostData, r)
+			fmt.Println(recentDiscussionData)
 			jsonData, err := json.Marshal(recentDiscussionData)
 			if err != nil {
 				fmt.Println("Error marshaling JSON:", err)
 				return
 			}
+			
 			// Broadcast the message to all connections
 			manager.broadcastMessage(messageType, jsonData)
 
@@ -546,21 +582,19 @@ func CreateAndSetSessionCookies(w http.ResponseWriter, username string) (string,
 
 func CreateDiscussionRequest(PostData map[string]interface{}, r *http.Request) []Discussion {
 	// Récupérer tous les cookies de la requête
-	var username string
-	// Utiliser la valeur du cookie "username"
-	cookies := r.Cookies()
-
-	for _, cookie := range cookies {
-		username = cookie.Name
-
+	username,token,err := GetCookies(r)
+	if err != nil {
+		fmt.Println(err)
+		fmt.Println(token)
 	}
+
 
 	title := PostData["title"].(string)
 	message := PostData["text"].(string)
 	category := PostData["category"].(string)
 
 	// Ouverture de la connexion à la base de données
-
+	
 	// Insérez la nouvelle discussion dans la base de données, y compris la catégorie
 	db.Exec("INSERT INTO post (username,title, message, catégorie) VALUES (?, ?, ?, ?)", username, title, message, category)
 

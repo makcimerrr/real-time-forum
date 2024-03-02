@@ -61,3 +61,11 @@ body {
   border-radius: 6px;
   background-color: rgb(255, 0, 144);
 }
+
+.watchthepost {
+  background-color: red;
+}
+
+.createcomment {
+  background-color: rgb(38, 255, 0);
+}
