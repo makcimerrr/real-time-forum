@@ -270,24 +270,52 @@ function connection(name, token) {
     };
     socket.send(JSON.stringify(discussionData));
 
-    // var userconnected = {
-    //   type: "userconnected",
-    // };
-    // socket.send(JSON.stringify(userconnected));
+    var userconnected = {
+      type: "userconnected",
+    };
+    socket.send(JSON.stringify(userconnected));
   });
 
-  document.addEventListener("submit", function (event) {
-    // Empêcher le comportement de soumission par défaut
-    event.preventDefault();
-    // Appeler la fonction registerUser de votre script JavaScript
-    INFO = submitDiscussionForm();
-    // console.log(INFO)
-    socket.send(JSON.stringify(INFO));
+  document
+    .getElementById("creatediscussion")
+    .addEventListener("submit", function (event) {
+      // Empêcher le comportement de soumission par défaut
+      event.preventDefault();
 
-    var discussionData = {
-      type: "showpost",
-    };
-    socket.send(JSON.stringify(discussionData));
+      // Appeler la fonction submitDiscussionForm de votre script JavaScript
+      var INFO = submitDiscussionForm();
+
+      // Envoyer les données du formulaire via WebSocket
+      if (INFO) {
+        socket.send(JSON.stringify(INFO));
+      }
+
+      var discussionData = {
+        type: "showpost",
+      };
+      socket.send(JSON.stringify(discussionData));
+    });
+
+  document
+    .getElementById("createcomments")
+    .addEventListener("submit", (event) => {
+      // Empêcher le comportement de soumission par défaut
+      event.preventDefault();
+
+      INFOComment = submitCommentForm();
+      // console.log(INFO)
+      socket.send(JSON.stringify(INFOComment));
+
+      var discussionData = {
+        type: "showcomment",
+        idpost: PostIDForComment,
+      };
+
+      socket.send(JSON.stringify(discussionData));
+    });
+
+  socket.addEventListener("close", (event) => {
+    console.log("WebSocket connection closed:", event);
   });
 
   socket.addEventListener("message", function (event) {
@@ -302,16 +330,23 @@ function connection(name, token) {
         break;
       // Ajoutez d'autres cas au besoin
 
+      case "createComments":
+        console.log("CREATE COMMENT FONCTIONNE ");
+
+        break;
+
+      case "showcomment":
+        console.log("it's k we see the comments !");
+        displayComment(responseData.data);
+
+        break;
+
       case "userconnected":
         console.log(responseData.data);
 
       default:
         console.warn("Type de message non géré:", responseData.type);
     }
-  });
-
-  socket.addEventListener("close", (event) => {
-    console.log("WebSocket connection closed:", event);
   });
 }
 
@@ -363,7 +398,6 @@ function displayPost(messageData) {
       var postId = discussions.id;
       handlePostClick(postId, messageData);
       showDiv("onepostpage");
-      console.log("heloo");
     });
   });
 
@@ -373,8 +407,12 @@ function displayPost(messageData) {
   }
 }
 
+var PostIDForComment = 0;
+
 function handlePostClick(postId, messageData) {
   console.log("Post clicked with ID:", postId);
+
+  PostIDForComment = postId;
 
   // Récupérer le post spécifique en fonction de l'ID
   var clickedPost = messageData.find((post) => post.id === parseInt(postId));
@@ -400,11 +438,54 @@ function setCookie(nom, valeur) {
   document.cookie = `Token=${valeur}`;
 }
 
-document
-  .getElementById("createcomments")
-  .addEventListener("submit", function (event) {
-    // Empêcher le comportement de soumission par défaut
-    event.preventDefault();
-    // Appeler la fonction registerUser de votre script JavaScript
-    loginUser();
+function submitCommentForm() {
+  // Récupérer les valeurs des champs du formulaire
+  var text = createcomments.elements["text"].value;
+  var idpost = PostIDForComment;
+  console.log(idpost);
+  var commentData = {
+    type: "createComments",
+    text: text,
+    idpost: idpost,
+  };
+
+  // C'est une notification, afficher la notification de succès
+  return commentData;
+}
+
+function displayComment(messageData) {
+  var CommentListDiv = document.getElementById("listofcomment");
+  var parentDivComment = document.querySelector(".parent-container-comment");
+
+  // Vérifier si la div parente existe déjà
+  if (!parentDivComment) {
+    // Si elle n'existe pas, créer une nouvelle div parente
+    parentDivComment = document.createElement("div");
+    parentDivComment.classList.add("parent-container-comment");
+  } else {
+    // Si elle existe, effacer son contenu
+    parentDivComment.innerHTML = "";
+  }
+
+  messageData.forEach(function (Comment) {
+    var comment = document.createElement("div");
+    comment.classList.add("comment");
+    comment.id = `${Comment.message}`;
+    console.log("TEST TEXT RECUPE DIV ");
+    console.log(comment.id);
+    comment.style.border = "1px solid #ccc";
+    comment.style.width = "25%";
+
+    var username = document.createElement("h2");
+    username.classList.add("username");
+    username.textContent = `Username: ${Comment.username}`;
+    comment.appendChild(username);
+
+    parentDivComment.appendChild(comment);
   });
+
+  // Ajouter ou mettre à jour la div parente à la div principale
+  if (!document.querySelector(".parent-container-comment")) {
+    CommentListDiv.appendChild(parentDivComment);
+  }
+}

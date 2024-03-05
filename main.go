@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"realtimeforum/Golang"
+	"strconv"
 	"text/template"
 
 	"github.com/gorilla/websocket"
@@ -48,6 +49,14 @@ type Discussion struct {
 	Title    string `json:"title"`
 	Text     string `json:"message"`
 	Category string `json:"category"`
+}
+
+type Comment struct {
+	id       int    `json:"id"`
+	idpost   int	`json:"idpost"`
+	Username string `json:"username"`
+	Message  string `json:"message"`
+
 }
 
 func main() {
@@ -139,6 +148,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 			var err error
 			tokencrypt, err = CreateAndSetSessionCookies(w, user.Username)
+
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -224,16 +234,15 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		formError = append(formError, "Error checking username and email availability")
-
 	}
 
 	CheckMDP := CheckPasswordHash(user.LoginPassword, AccountPassword)
 
-	var tokencrypt = ""
+	var tokencrypt = "_"
 
 	if CheckMDP == true {
-		fmt.Println("MATCHING PASSWORD")
 		tokencrypt, _ = CreateAndSetSessionCookies(w, user.LoginUser)
+		
 	} else {
 		formError = append(formError, "Wrong password !")
 	}
@@ -448,21 +457,35 @@ func WebSocketManager(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("Error accessing 'type' field in JSON")
 			continue
 		}
+		fmt.Println("TEST TYPE")
 		fmt.Println(receivedType)
 		switch receivedType {
 		case "createDiscussion":
 			var recentDiscussionData []Discussion
 			recentDiscussionData = CreateDiscussionRequest(PostData, r)
-			fmt.Println(recentDiscussionData)
 			jsonData, err := json.Marshal(recentDiscussionData)
 			if err != nil {
 				fmt.Println("Error marshaling JSON:", err)
 				return
 			}
-			
+
 			// Broadcast the message to all connections
 			manager.broadcastMessage(messageType, jsonData)
 
+		case "createComments":
+
+			 var recentCommentData []Comment
+			recentCommentData = CreateCommentRequest(PostData, r)
+
+			jsonData, err := json.Marshal(recentCommentData)
+			if err != nil {
+				fmt.Println("Error marshaling JSON:", err)
+				return
+			}
+
+			// Broadcast the message to all connections
+			manager.broadcastMessage(messageType, jsonData)
+		
 		case "autreType":
 			fmt.Println("Handling 'autreType'")
 			if err := conn.WriteMessage(messageType, p); err != nil {
@@ -475,6 +498,26 @@ func WebSocketManager(w http.ResponseWriter, r *http.Request) {
 			response := Response{
 				Type: "showpost",
 				Data: AllDiscussion,
+			}
+
+			jsonData, err := json.Marshal(response)
+			if err != nil {
+				fmt.Println("Error marshaling JSON:", err)
+				return
+			}
+			manager.broadcastMessage(messageType, jsonData)
+		
+		case "showcomment":
+
+			idpost := PostData["idpost"].(string)
+
+			 
+			AllPostWithTheSameId := fetchRecentCommentFromDatabase(idpost)
+			fmt.Println(AllPostWithTheSameId)
+
+			response := Response{
+				Type: "showcomment",
+				Data: AllPostWithTheSameId,
 			}
 
 			jsonData, err := json.Marshal(response)
@@ -506,7 +549,7 @@ func WebSocketManager(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-
+        
 		default:
 			fmt.Println("Unknown type:", messageType)
 			if err := conn.WriteMessage(messageType, p); err != nil {
@@ -542,6 +585,7 @@ func CreateAndSetSessionCookies(w http.ResponseWriter, username string) (string,
 		if err != nil {
 			return "", err
 		}
+
 		// Insérer la nouvelle entrée dans la base de données
 		_, err = db.Exec("INSERT INTO token_user (username, sessionToken) VALUES (?, ?)", username, sessionToken)
 		if err != nil {
@@ -627,4 +671,60 @@ func fetchRecentDiscussionsFromDatabase() []Discussion {
 	}
 
 	return recentDiscussionData
+}
+
+
+func CreateCommentRequest(PostData map[string]interface{}, r *http.Request) []Comment {
+	// Récupérer tous les cookies de la requête
+    username, Token,err := GetCookies(r)
+	if err != nil {
+		fmt.Print(err)
+		fmt.Println(Token)
+	}
+
+
+	message := PostData["text"].(string)
+	idpost := PostData["idpost"].(string)
+
+	// Ouverture de la connexion à la base de données
+	
+	// Insérez la nouvelle discussion dans la base de données, y compris la catégorie
+	db.Exec("INSERT INTO comment (idpost,username,message) VALUES (?, ?, ?)", idpost,username,message)
+
+	allComment := fetchRecentCommentFromDatabase(idpost)
+
+	return allComment
+
+}
+
+func fetchRecentCommentFromDatabase(idpost string) []Comment {
+	fmt.Println(idpost)
+
+	ConvertedIdPost ,err := strconv.Atoi(idpost)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	rows, err := db.Query("SELECT id, idpost, username, message FROM comment WHERE idpost = ?", ConvertedIdPost)
+	if err != nil {
+		log.Println("Error querying database:", err)
+		return nil
+	}
+	defer rows.Close()
+
+	var recentCommentData []Comment
+
+	for rows.Next() {
+		var comments Comment
+		err := rows.Scan(&comments.id,&comments.idpost, &comments.Username, &comments.Message)
+		if err != nil {
+			log.Println("Error scanning rows:", err)
+			continue
+		}
+
+		// Ajouter la chaîne de caractères à la slice
+		recentCommentData = append(recentCommentData, comments)
+	}
+
+	return recentCommentData
 }
