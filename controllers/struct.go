@@ -35,3 +35,16 @@ type UserList struct {
 type DiscussionData struct {
 	Id int `json:"id"`
 }
+
+type ChatData struct {
+	ID       int    `json:"id"`
+	SendUser string `json:"sendUser"`
+	ToUser   string `json:"toUser"`
+	Message  string `json:"message"`
+	Time     string `json:"time"`
+}
+
+type DisplayChat struct {
+	ReceiverUser string `json:"receiverUser"`
+	SenderUser   string `json:"senderUser"`
+}

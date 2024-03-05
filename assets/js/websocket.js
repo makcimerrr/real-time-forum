@@ -1,8 +1,9 @@
 import {deleteCookie} from "./cookie.js";
 import {fetchAndDisplayDiscussions} from "./post.js";
-import { displayNotification } from "./notif.js";
 import {getCookie} from "./cookie.js";
 import {displayUserList} from "./userList.js";
+import {displayChatBox} from "./userList.js";
+import {showNotification} from "./notif.js";
 
 let NewWebsocket;
 
@@ -17,6 +18,7 @@ export function logout() {
 
     window.location.reload();
 }
+
 
 export function startWebSocket() {
     // Vérifier si la connexion WebSocket n'est pas déjà établie
@@ -37,16 +39,36 @@ export function startWebSocket() {
                 const currentUser = getCookie("username"); // Supposons que vous stockez l'identifiant de l'utilisateur dans un cookie
                 if (message.data.username !== currentUser) {
                     console.log("Hey")
-                    // Si l'utilisateur actuel n'est pas l'auteur du post, affichez une notification
-                    displayNotification("New post added ! By: " + message.data.username); // Cette fonction doit être implémentée pour afficher une notification à l'utilisateur
                 }
                 // Mettre à jour l'interface utilisateur avec la nouvelle discussion
                 fetchAndDisplayDiscussions();
-            }else if (message.type === 'comment') {
+            } else if (message.type === 'comment') {
                 // Mettre à jour l'interface utilisateur avec la nouvelle discussion
                 //fetchAndDisplayDiscussions();
-            }else if (message.type === 'login') {
-                displayUserList(message.data.connected,message.data.list)
+            } else if (message.type === 'login') {
+                displayUserList(message.data.connected, message.data.list)
+            }else if (message.data.receiverUser === username) {
+                showNotification("Nouvelle notif de : " + message.data.senderUser, "notif")
+
+                const chatBody = document.querySelector('.chat-body');
+                chatBody.innerHTML = '<p>Click <a id="refreshChat">here</a> to refresh</p>';
+
+                const refreshLink = document.getElementById('refreshChat');
+                refreshLink.style.color = 'blue'; // Appliquer la couleur bleue
+                refreshLink.style.textDecoration = 'underline'; // Souligner le texte
+                refreshLink.style.cursor = 'pointer'; // Utiliser le curseur pointeur
+
+                refreshLink.addEventListener('click', function(event) {
+                    event.preventDefault(); // Empêche le comportement par défaut du lien
+                    displayChatBox(message.data.senderUser); // Actualiser la boîte de chat
+                });
+
+                const notification = document.getElementById("Notification");
+                notification.addEventListener('click', function(event) {
+                    event.preventDefault(); // Empêche le comportement par défaut du lien
+                    displayChatBox(message.data.senderUser); // Actualiser la boîte de chat
+                });
+
             }
         };
 

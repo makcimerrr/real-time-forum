@@ -1,4 +1,5 @@
 import {showDiv} from "./show.js";
+import {showNotification} from "./notif.js";
 export async function register() {
     const username = document.getElementById('username').value;
     const email = document.getElementById('email').value;
@@ -33,7 +34,7 @@ export async function register() {
                 console.log("Success Register");
                 showDiv("login");
                 window.location.reload();
-                document.getElementById('notifMessageLogin').innerText = responseData.notif;
+                showNotification(responseData.notif, "succes")
             } else {
                 document.getElementById('errorMessageRegister').innerText = responseData.message;
             }

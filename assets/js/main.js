@@ -1,12 +1,13 @@
-import { getCookie } from "./cookie.js";
-import { showDiv } from "./show.js";
-import { login } from "./login.js";
+import {getCookie} from "./cookie.js";
+import {showDiv} from "./show.js";
+import {login} from "./login.js";
 import {post, fetchAndDisplayDiscussions} from "./post.js";
 import {register} from "./register.js";
 import {startWebSocket} from "./websocket.js";
 import {logout} from "./websocket.js";
 import {comment} from "./comment.js";
 
+const username = getCookie("username")
 document.addEventListener('DOMContentLoaded', function () {
     // Appeler la fonction pour récupérer et afficher les discussions initiales
     fetchAndDisplayDiscussions();
@@ -24,7 +25,9 @@ window.onload = function () {
 document
     .getElementById("Forum")
     .addEventListener("click", function () {
-        showDiv("home");
+        if (username) {
+            showDiv("home");
+        }
     });
 
 document
@@ -33,7 +36,6 @@ document
         // Empêcher le comportement de soumission par défaut
         event.preventDefault();
 
-        // Appeler la fonction login de votre script JavaScript
         logout();
     });
 

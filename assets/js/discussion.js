@@ -1,3 +1,6 @@
+import {updateFormWithVariable} from "./comment.js";
+import {showDiv} from "./show.js";
+
 export async function displayDiscussion(id) {
     const discussion = document.querySelector('showDiscussion');
 
@@ -18,7 +21,7 @@ export async function displayDiscussion(id) {
             const responseData = await response.json();
             if (responseData.success) {
                 console.log("Discussion affichee")
-                displayDiscussionDetails(responseData);
+                displayDiscussionDetails(responseData, idDiscussion);
             } else {
                 console.log("Erreur")
             }
@@ -30,9 +33,9 @@ export async function displayDiscussion(id) {
     }
 }
 
-function displayDiscussionDetails(responseData) {
+function displayDiscussionDetails(responseData, idDiscussion) {
     const discussionContainer = document.getElementById('showDiscussion');
-    discussionContainer.innerHTML = '';
+    discussionContainer.innerHTML = ''
 
     // Créez les éléments HTML correspondant aux détails de la discussion
     const h1 = document.createElement("h1");
@@ -44,9 +47,9 @@ function displayDiscussionDetails(responseData) {
         const discussionDiv = document.createElement("div");
         discussionDiv.classList.add("discussion");
         discussionDiv.innerHTML = `
-            <h3>${discussion.title}</h3>
-            <p><strong>Par :</strong> ${discussion.username}</p>
-            <p>${discussion.message}</p>
+            <h3>Title Post : ${discussion.title}</h3>
+            <p><strong>By : </strong> ${discussion.username}</p>
+            <p>Message : ${discussion.message}</p>
         `;
         discussionContainer.appendChild(discussionDiv);
     });
@@ -56,10 +59,21 @@ function displayDiscussionDetails(responseData) {
         const commentDiv = document.createElement("div");
         commentDiv.classList.add("comment");
         commentDiv.innerHTML = `
-            <p><strong>${comment.username}</strong></p>
-            <p>${comment.title}</p>
-            <p>${comment.message}</p>
+            <p>From : <strong>${comment.username}</strong></p>
+            <p>Title : ${comment.title}</p>
+            <p>Message : ${comment.message}</p>
         `;
         discussionContainer.appendChild(commentDiv);
     });
+
+    const AddComment = document.createElement('button')
+    AddComment.textContent = 'Add Comment'
+    AddComment.classList.add('AddComment')
+    AddComment.id = idDiscussion
+    AddComment.addEventListener('click', function (){
+        let id = idDiscussion
+        updateFormWithVariable(id)
+        showDiv('createCommentForm')
+    })
+    discussionContainer.appendChild(AddComment)
 }
