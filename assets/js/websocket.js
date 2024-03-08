@@ -46,29 +46,27 @@ export function startWebSocket() {
                 // Mettre à jour l'interface utilisateur avec la nouvelle discussion
                 //fetchAndDisplayDiscussions();
             } else if (message.type === 'login') {
-                displayUserList(message.data.connected, message.data.list)
-            }else if (message.data.receiverUser === username) {
-                showNotification("Nouvelle notif de : " + message.data.senderUser, "notif")
+                displayUserList(message.data.username, message.data.connected, message.data.list, message.data.allUsers);
+            }else if (message.type === 'chat') {
+                if (message.data.receiverUser === username) {
+                    showNotification("Nouvelle notif de : " + message.data.senderUser, "notif")
 
-                const chatBody = document.querySelector('.chat-body');
-                chatBody.innerHTML = '<p>Click <a id="refreshChat">here</a> to refresh</p>';
+                    const chatBody = document.querySelector('.chat-body');
+                    const isChatBoxDisplayed = chatBody.style.display !== 'none';
 
-                const refreshLink = document.getElementById('refreshChat');
-                refreshLink.style.color = 'blue'; // Appliquer la couleur bleue
-                refreshLink.style.textDecoration = 'underline'; // Souligner le texte
-                refreshLink.style.cursor = 'pointer'; // Utiliser le curseur pointeur
+                    if (isChatBoxDisplayed) {
+                       displayChatBox(message.data.senderUser);
+                       chatBody.scrollTop = chatBody.scrollHeight - chatBody.offsetHeight;
+                    }
 
-                refreshLink.addEventListener('click', function(event) {
-                    event.preventDefault(); // Empêche le comportement par défaut du lien
-                    displayChatBox(message.data.senderUser); // Actualiser la boîte de chat
-                });
+                    const notification = document.getElementById("Notification");
+                    notification.addEventListener('click', function (event) {
+                        event.preventDefault(); // Empêche le comportement par défaut du lien
+                        displayChatBox(message.data.senderUser); // Actualiser la boîte de chat
+                        chatBody.scrollTop = chatBody.scrollHeight - chatBody.offsetHeight;
+                    });
 
-                const notification = document.getElementById("Notification");
-                notification.addEventListener('click', function(event) {
-                    event.preventDefault(); // Empêche le comportement par défaut du lien
-                    displayChatBox(message.data.senderUser); // Actualiser la boîte de chat
-                });
-
+                }
             }
         };
 

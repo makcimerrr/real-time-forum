@@ -1,4 +1,4 @@
-*{
+* {
     padding: 0;
     margin: 0;
 }
@@ -60,11 +60,11 @@ li {
     .container {
         flex-direction: column;
     }
+
     aside, main {
         width: 100%;
     }
 }
-
 
 
 .Post {
@@ -120,6 +120,7 @@ li {
     z-index: 9999;
     animation: slideIn 0.5s ease forwards, fadeOut 0.5s 2.5s ease forwards;
 }
+
 .Notification {
     display: none;
     position: fixed;
@@ -198,12 +199,30 @@ li {
 }
 
 .chat-body {
-    overflow-y: auto;
+    max-height: 300px; /* ou toute autre valeur souhaitée */
+    overflow-y: scroll;
     padding: 10px;
 }
 
 .chat-message {
     margin-bottom: 10px;
+    overflow: hidden;
+}
+
+.chat-message .message-container {
+    padding: 5px 10px;
+    border-radius: 5px;
+    max-width: 70%; /* Limite la largeur des messages pour qu'ils ne prennent pas toute la largeur */
+}
+
+.chat-message .message-container.you {
+    background-color: #DCF8C6; /* Couleur de fond pour les messages de l'utilisateur actuel */
+    float: right;
+}
+
+.chat-message .message-container.other {
+    background-color: #E8E8E8; /* Couleur de fond pour les messages de l'autre utilisateur */
+    float: left;
 }
 
 .chat-message .sender {
@@ -217,7 +236,9 @@ li {
 .chat-message .time {
     font-size: 12px;
     color: #999;
+    float: right;
 }
+
 #refreshChat {
     color: blue;
     text-decoration: underline;
