@@ -18,18 +18,24 @@ body {
     flex-direction: column;
     min-height: 100vh;
     margin: 0;
-    overflow-inline: hidden;
+    overflow: hidden; /* Empêche le défilement de la page */
 }
 
 .container {
+    height: 100vh; /* Hauteur maximale de la page égale à la hauteur de la fenêtre */
     display: flex;
     flex: 1;
     overflow: auto;
 }
 
-aside {
-    flex: 0 0 10%;
-    background-color: #f0f0f0;
+#userListContainer {
+    width: 0;
+    overflow: hidden;
+    transition: width 0.3s ease;
+}
+
+#userListContainer.is-active {
+    width: 250px;
     padding: 20px;
 }
 
@@ -46,6 +52,12 @@ header, nav, footer {
     width: 100%;
 }
 
+footer {
+    position: fixed; /* Fixe le pied de page en bas de la fenêtre */
+    bottom: 0;
+    text-align: center;
+}
+
 ul {
     list-style-type: none;
     padding: 0;
@@ -53,17 +65,7 @@ ul {
 
 li {
     margin-bottom: 10px;
-}
-
-/* Pour une meilleure lisibilité sur mobile */
-@media screen and (max-width: 768px) {
-    .container {
-        flex-direction: column;
-    }
-
-    aside, main {
-        width: 100%;
-    }
+    cursor: pointer;
 }
 
 
@@ -147,17 +149,16 @@ li {
 }
 
 #Alldiscussions {
-    display: flex; /* Utiliser un conteneur flex pour placer les divs enfants côte à côte */
-    flex-wrap: wrap; /* Permettre aux divs enfants de passer à la ligne lorsque l'espace est insuffisant */
+    display: flex;
+    flex-wrap: wrap;
 }
 
 #Alldiscussions > div {
-    width: calc(33.33% - 20px); /* Largeur de chaque div enfant */
-    margin: 10px; /* Marge entre chaque div enfant */
-    box-sizing: border-box; /* Inclure la bordure et le remplissage dans la largeur */
-    border: 1px solid #ccc; /* Bordure de chaque div enfant */
-    padding: 10px; /* Remplissage de chaque div enfant */
-    /* Ajoutez d'autres styles selon vos besoins */
+    width: calc(33.33% - 20px);
+    margin: 10px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    padding: 10px;
 }
 
 
@@ -199,7 +200,7 @@ li {
 }
 
 .chat-body {
-    max-height: 300px; /* ou toute autre valeur souhaitée */
+    max-height: 300px;
     overflow-y: scroll;
     padding: 10px;
 }
@@ -239,12 +240,25 @@ li {
     float: right;
 }
 
-#refreshChat {
-    color: blue;
-    text-decoration: underline;
+#logout {
+    position: absolute;
+    top: 20px;
+    right: 20px;
     cursor: pointer;
+    outline: none;
+    border: none;
+    background-color: #ffffff;
+    padding: 15px 15px;
+    border-radius: 30px;
+    font-size: 1.2rem;
+    color: #000000;
+    background-size: 100% 100%;
+}
+#logout:hover {
+    background-color: #000000;
+    color: #ffffff;
+    transition: 0.5s;
 }
 
-#refreshChat:hover {
-    color: darkblue;
-}
+
+

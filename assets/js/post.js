@@ -50,47 +50,47 @@ export async function fetchAndDisplayDiscussions(discussion = null) {
     }
 }
 
-function displayDiscussions(discussions) {
-    // Afficher les discussions dans la page HTML
+function displayDiscussions(discussions, pageNumber, discussionsPerPage) {
+
+    const startIndex = (pageNumber - 1) * discussionsPerPage;
+    const endIndex = startIndex + discussionsPerPage;
+
     const Alldiscussions = document.getElementById('Alldiscussions');
-    Alldiscussions.innerHTML = ''; // Effacer le contenu existant
+    Alldiscussions.innerHTML = '';
+
     discussions.forEach(function (discussion) {
-        // Créer une div pour chaque discussion
+
         const discussionDiv = document.createElement('div');
         discussionDiv.classList.add('Post');
         discussionDiv.id = `discussion-${discussion.id}`;
 
-        // Créer et ajouter un titre h1 pour le nom de l'utilisateur
         const userHeading = document.createElement('h1');
         userHeading.classList.add('discussionUser');
         userHeading.textContent = `User: ${discussion.username}`;
         discussionDiv.appendChild(userHeading);
 
-        // Créer et ajouter un titre h2 pour le titre de la discussion
         const titleHeading = document.createElement('h2');
         titleHeading.textContent = `Title: ${discussion.title}`;
         titleHeading.classList.add('discussionTitle');
         titleHeading.style.cursor = 'pointer';
         discussionDiv.appendChild(titleHeading);
 
-        // Créer et ajouter un paragraphe pour la catégorie
         const categoryParagraph = document.createElement('p');
         categoryParagraph.textContent = `Category: ${discussion.category}`;
         categoryParagraph.classList.add('discussionCategory');
         discussionDiv.appendChild(categoryParagraph);
 
-        // Créer et ajouter un paragraphe pour le message
         const messageParagraph = document.createElement('p');
         messageParagraph.textContent = `Message: ${discussion.message}`;
         messageParagraph.classList.add('discussionMessage');
-        messageParagraph.style.display = 'none'; // Masquer le message par défaut
+        messageParagraph.style.display = 'none';
         discussionDiv.appendChild(messageParagraph);
 
         const AddComment = document.createElement('button')
         AddComment.textContent = 'Add Comment'
         AddComment.classList.add('AddComment')
         AddComment.id = `${discussion.id}`
-        AddComment.style.display = 'none'; // Masquer le message par défaut
+        AddComment.style.display = 'none';
         AddComment.addEventListener('click', function () {
             let id = discussion.id
             updateFormWithVariable(id)
@@ -102,7 +102,7 @@ function displayDiscussions(discussions) {
         ShowDiscussion.textContent = 'Show Discussion'
         ShowDiscussion.classList.add('ShowDiscussion')
         ShowDiscussion.id = `${discussion.id}`
-        ShowDiscussion.style.display = 'none'; // Masquer le message par défaut
+        ShowDiscussion.style.display = 'none';
         ShowDiscussion.addEventListener('click', function () {
             let id = discussion.id
             console.log("ShowDiscussion", id)
@@ -111,7 +111,6 @@ function displayDiscussions(discussions) {
         })
         discussionDiv.appendChild(ShowDiscussion)
 
-        // Ajouter un gestionnaire d'événements au titre pour afficher/cacher le message
         titleHeading.addEventListener('click', function () {
             const messageDiv = discussionDiv.querySelector(`.discussionMessage`);
             if (messageDiv.style.display === 'none') {
@@ -125,9 +124,12 @@ function displayDiscussions(discussions) {
             }
         });
 
-        // Ajouter la div de discussion à la liste des utilisateurs
         Alldiscussions.appendChild(discussionDiv);
     });
+
+}
+
+function createDiscussionElement(discussion) {
 
 }
 

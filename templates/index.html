@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="static/css/style.css" rel="stylesheet">
+    <link href="static/css/hamburger.css" rel="stylesheet">
     <title>Real Time Forum</title>
     <style>
         .registrationForm,
@@ -15,7 +16,7 @@
         .showDiscussion,
         .SuccessNotification,
         .ErrorNotification,
-        .chat-container{
+        .chat-container {
             display: none;
         }
 
@@ -28,6 +29,11 @@
 <body>
 <header>
     <button id="logout">Logout</button>
+    <button class="hamburger hamburger--collapse" type="button">
+  <span class="hamburger-box">
+    <span class="hamburger-inner"></span>
+  </span>
+    </button>
 </header>
 <nav>
     <h1 id="Forum">Forum</h1>
@@ -38,7 +44,7 @@
 </nav>
 
 <div class="container">
-    <aside>
+    <aside id="userListContainer">
         <div id="userList"></div>
     </aside>
     <main>

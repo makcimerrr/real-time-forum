@@ -14,6 +14,19 @@ document.addEventListener('DOMContentLoaded', function () {
     // Gérer le clic sur le titre de chaque discussion pour afficher le message
 });
 
+const hamburger = document.querySelector(".hamburger");
+const userListContainer = document.getElementById("userListContainer");
+
+hamburger.addEventListener("click", function() {
+    hamburger.classList.toggle("is-active");
+    userListContainer.classList.toggle("is-active");
+});
+
+/*document.getElementById('hamburger').addEventListener('click', function() {
+    document.querySelector('.container').classList.toggle('show-sidebar');
+});*/
+
+
 window.onload = function () {
     const username = getCookie("username");
     if (username) {
