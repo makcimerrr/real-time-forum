@@ -49,43 +49,31 @@ export async function fetchAndDisplayDiscussions(discussion = null) {
         console.error('Erreur :', error);
     }
 }
-
-function displayDiscussions(discussions, pageNumber, discussionsPerPage) {
-
-    const startIndex = (pageNumber - 1) * discussionsPerPage;
-    const endIndex = startIndex + discussionsPerPage;
-
+function displayDiscussions(discussions) {
     const Alldiscussions = document.getElementById('Alldiscussions');
     Alldiscussions.innerHTML = '';
-
     discussions.forEach(function (discussion) {
-
         const discussionDiv = document.createElement('div');
         discussionDiv.classList.add('Post');
         discussionDiv.id = `discussion-${discussion.id}`;
-
         const userHeading = document.createElement('h1');
         userHeading.classList.add('discussionUser');
         userHeading.textContent = `User: ${discussion.username}`;
         discussionDiv.appendChild(userHeading);
-
         const titleHeading = document.createElement('h2');
         titleHeading.textContent = `Title: ${discussion.title}`;
         titleHeading.classList.add('discussionTitle');
         titleHeading.style.cursor = 'pointer';
         discussionDiv.appendChild(titleHeading);
-
         const categoryParagraph = document.createElement('p');
         categoryParagraph.textContent = `Category: ${discussion.category}`;
         categoryParagraph.classList.add('discussionCategory');
         discussionDiv.appendChild(categoryParagraph);
-
         const messageParagraph = document.createElement('p');
         messageParagraph.textContent = `Message: ${discussion.message}`;
         messageParagraph.classList.add('discussionMessage');
         messageParagraph.style.display = 'none';
         discussionDiv.appendChild(messageParagraph);
-
         const AddComment = document.createElement('button')
         AddComment.textContent = 'Add Comment'
         AddComment.classList.add('AddComment')
@@ -97,7 +85,6 @@ function displayDiscussions(discussions, pageNumber, discussionsPerPage) {
             showDiv('createCommentForm')
         })
         discussionDiv.appendChild(AddComment)
-
         const ShowDiscussion = document.createElement('button')
         ShowDiscussion.textContent = 'Show Discussion'
         ShowDiscussion.classList.add('ShowDiscussion')
@@ -110,7 +97,6 @@ function displayDiscussions(discussions, pageNumber, discussionsPerPage) {
             showDiv('showDiscussion')
         })
         discussionDiv.appendChild(ShowDiscussion)
-
         titleHeading.addEventListener('click', function () {
             const messageDiv = discussionDiv.querySelector(`.discussionMessage`);
             if (messageDiv.style.display === 'none') {
@@ -123,13 +109,6 @@ function displayDiscussions(discussions, pageNumber, discussionsPerPage) {
                 ShowDiscussion.style.display = 'none';
             }
         });
-
         Alldiscussions.appendChild(discussionDiv);
     });
-
 }
-
-function createDiscussionElement(discussion) {
-
-}
-

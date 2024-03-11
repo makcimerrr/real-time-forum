@@ -12,36 +12,61 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var chat ChatData
+	var isFalse bool
 
 	if err := json.NewDecoder(r.Body).Decode(&chat); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	insertMessage := "INSERT INTO private_message (sendUser, toUser, message, time) VALUES (?, ?, ?, ?)"
-
-	_, err := Db.Exec(insertMessage, chat.SendUser, chat.ToUser, chat.Message, chat.Time)
-	if err != nil {
-		return
+	if chat.SendUser == "" || chat.ToUser == "" || chat.Message == "" {
+		jsonResponse := map[string]interface{}{
+			"success": false,
+			"message": "Missing fields",
+		}
+		err := json.NewEncoder(w).Encode(jsonResponse)
+		if err != nil {
+			return
+		}
+		isFalse = true
+	} else if chat.SendUser == chat.ToUser {
+		jsonResponse := map[string]interface{}{
+			"success": false,
+			"message": "Can't send message to yourself",
+		}
+		err := json.NewEncoder(w).Encode(jsonResponse)
+		if err != nil {
+			return
+		}
+		isFalse = true
 	}
 
-	var chatData DisplayChat
+	if !isFalse {
 
-	chatData.ReceiverUser = chat.ToUser
-	chatData.SenderUser = chat.SendUser
+		insertMessage := "INSERT INTO private_message (sendUser, toUser, message, time) VALUES (?, ?, ?, ?)"
 
-	postDataChat := WebsocketMessage{Type: "chat", Data: chatData}
-	broadcast <- postDataChat
+		_, err := Db.Exec(insertMessage, chat.SendUser, chat.ToUser, chat.Message, chat.Time)
+		if err != nil {
+			return
+		}
 
-	jsonResponse := map[string]interface{}{
-		"success": true,
-		"message": "Added Message",
+		var chatData DisplayChat
+
+		chatData.ReceiverUser = chat.ToUser
+		chatData.SenderUser = chat.SendUser
+
+		postDataChat := WebsocketMessage{Type: "chat", Data: chatData}
+		broadcast <- postDataChat
+
+		jsonResponse := map[string]interface{}{
+			"success": true,
+			"message": "Added Message",
+		}
+		err = json.NewEncoder(w).Encode(jsonResponse)
+		if err != nil {
+			return
+		}
 	}
-	err = json.NewEncoder(w).Encode(jsonResponse)
-	if err != nil {
-		return
-	}
-
 }
 
 func getChatMessages(w http.ResponseWriter, r *http.Request) {

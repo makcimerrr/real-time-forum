@@ -1,5 +1,16 @@
 package controllers
 
+import "github.com/gorilla/websocket"
+
+type Client struct {
+	Conn     *websocket.Conn
+	Username string
+}
+
+type WebsocketMessage struct {
+	Type string      `json:"type"`
+	Data interface{} `json:"data"`
+}
 type Post struct {
 	Type      string `json:"type"`
 	Username  string `json:"username"`

@@ -70,8 +70,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 				log.Fatal(err)
 			}
 
-			postDataLogin := WebsocketMessage{Type: "login", Data: UserData}
-			broadcast <- postDataLogin
+			/*postDataLogin := WebsocketMessage{Type: "login", Data: UserData}
+			broadcast <- postDataLogin*/
 
 			jsonResponse := map[string]interface{}{
 				"success":  true,

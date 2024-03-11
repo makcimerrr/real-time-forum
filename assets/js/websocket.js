@@ -10,7 +10,7 @@ let NewWebsocket;
 export function logout() {
 
     if (NewWebsocket) {
-        NewWebsocket.close(1000, "Déconnexion de l'utilisateur");
+        NewWebsocket.close(1000, "Déconnexion de l'utilisateur : " + getCookie("username"));
         NewWebsocket = null; // Réinitialiser la variable websocket pour pouvoir la rétablir lors de la prochaine connexion
     }
     deleteCookie("username", "strict");
@@ -36,17 +36,19 @@ export function startWebSocket() {
             //console.log(message);
             if (message.type === 'post') {
                 // Vérifier si l'utilisateur actuel est l'auteur du post
-                const currentUser = getCookie("username"); // Supposons que vous stockez l'identifiant de l'utilisateur dans un cookie
+                const currentUser = getCookie("username");
                 if (message.data.username !== currentUser) {
                     console.log("Hey")
                 }
-                // Mettre à jour l'interface utilisateur avec la nouvelle discussion
                 fetchAndDisplayDiscussions();
             } else if (message.type === 'comment') {
-                // Mettre à jour l'interface utilisateur avec la nouvelle discussion
                 //fetchAndDisplayDiscussions();
             } else if (message.type === 'login') {
-                displayUserList(message.data.username, message.data.connected, message.data.list, message.data.allUsers);
+                if (message.data.username === username) {
+                    displayUserList(message.data.username, message.data.connected, message.data.list, message.data.allUsers)
+                }else {
+                    displayUserList(username, message.data.connected, message.data.list, message.data.allUsers)
+                }
             }else if (message.type === 'chat') {
                 if (message.data.receiverUser === username) {
                     showNotification("Nouvelle notif de : " + message.data.senderUser, "notif")

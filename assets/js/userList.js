@@ -14,6 +14,9 @@ export function displayUserList(usernameVerify, NumberofConnected, List, AllUser
     const ul = document.createElement("ul");
 
     AllUsers.forEach(user => {
+        if (usernameVerify === user) {
+            return;
+        }
         const li = document.createElement("li");
         li.textContent = user;
         li.id = user;
@@ -41,9 +44,6 @@ export function displayUserList(usernameVerify, NumberofConnected, List, AllUser
         } else {
             ul.appendChild(li);
         }
-
-        console.log("user: " + user + " usernameVerify: " + usernameVerify);
-        // Ajouter un écouteur d'événements au clic sur l'utilisateur
         li.addEventListener("click", () => {
             if (usernameVerify !== user) {
                 displayChatBox(user);
@@ -52,8 +52,6 @@ export function displayUserList(usernameVerify, NumberofConnected, List, AllUser
             }
         });
     });
-
-    // Ajouter la liste d'utilisateurs à l'élément userList
     userList.appendChild(ul);
 }
 
@@ -165,7 +163,7 @@ async function sendMessage(user) {
                     input.value = '';
                     displayChatBox(user);
                 } else {
-                    showNotification("Bug", "error")
+                    showNotification(responseData.message, "error")
                 }
             } else {
                 throw Error('Erreur lors de la requête.');
@@ -204,23 +202,3 @@ async function getChatMessages(sender, receiver) {
         return [];
     }
 }
-
-/*function addMessageToChat(message) {
-    var chatBody = document.querySelector('.chat-body');
-
-    var chatMessage = document.createElement('div');
-    chatMessage.className = 'chat-message';
-
-    var sender = document.createElement('span');
-    sender.className = 'sender';
-    sender.textContent = message.sender + ': ';
-    chatMessage.appendChild(sender);
-
-    var messageText = document.createElement('span');
-    messageText.className = 'message';
-    messageText.textContent = message.text;
-    chatMessage.appendChild(messageText);
-
-    chatBody.appendChild(chatMessage);
-}*/
-

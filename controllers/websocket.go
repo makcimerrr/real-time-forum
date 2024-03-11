@@ -12,22 +12,10 @@ var (
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	}
-	// clients est une carte qui associe chaque connexion WebSocket à ses données utilisateur
 	clients   = make(map[*websocket.Conn]*Client)
 	broadcast = make(chan WebsocketMessage)
 	List      []string
 )
-
-// Créez une structure pour stocker à la fois la connexion websocket et le nom d'utilisateur
-type Client struct {
-	Conn     *websocket.Conn
-	Username string
-}
-
-type WebsocketMessage struct {
-	Type string      `json:"type"`
-	Data interface{} `json:"data"`
-}
 
 func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrade.Upgrade(w, r, nil)
@@ -55,12 +43,15 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		var message WebsocketMessage
 		err := conn.ReadJSON(&message)
 		if err != nil {
-			if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-				log.Println("Déconnexion")
+			if websocket.IsCloseError(err, websocket.CloseGoingAway) {
+				log.Println("Connexion interrompue de la part de l'utilisateur :", username) //Refresh de la page
+			} else if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+				log.Println("Déconnexion") //Logout
+			} else if websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
+				log.Println("Error:", err) //Error
 			}
-			log.Println("Error:", err)
 			delete(clients, conn)
-			// Supprimez l'utilisateur de la liste
+			// Delete the user from the list
 			updateList(username, false)
 			break
 		}
