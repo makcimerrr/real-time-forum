@@ -1,0 +1,26 @@
+.bn3637 {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 300;
+    padding: 5px 10px;
+    font-size: 12px;
+    text-align: center;
+    text-decoration: none;
+    color: #aca3a3;
+    backface-visibility: hidden;
+    border: 0.3rem solid transparent;
+    border-radius: 3rem;
+}
+.bn38 {
+    border-color: transparent;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.bn38:hover {
+    background-color: #60605e;
+}
+
+.divButton{
+    display: flex;
+}

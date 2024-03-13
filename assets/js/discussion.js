@@ -37,12 +37,10 @@ function displayDiscussionDetails(responseData, idDiscussion) {
     const discussionContainer = document.getElementById('showDiscussion');
     discussionContainer.innerHTML = ''
 
-    // Créez les éléments HTML correspondant aux détails de la discussion
     const h1 = document.createElement("h1");
     h1.textContent = "Discussion Details";
     discussionContainer.appendChild(h1);
 
-    // Affichage des discussions
     responseData.discussion.forEach(discussion => {
         const discussionDiv = document.createElement("div");
         discussionDiv.classList.add("discussion");
@@ -54,23 +52,32 @@ function displayDiscussionDetails(responseData, idDiscussion) {
         discussionContainer.appendChild(discussionDiv);
     });
 
-    // Affichage des commentaires
-    responseData.comments.forEach(comment => {
-        const commentDiv = document.createElement("div");
-        commentDiv.classList.add("comment");
-        commentDiv.innerHTML = `
+    if (!responseData.comments || responseData.comments.length === 0) {
+        const p = document.createElement("p");
+        p.textContent = "No comments yet";
+        p.style.color = "red";
+        p.style.textAlign = "center";
+        p.style.marginTop = "10px";
+        p.style.marginBottom = "10px";
+        discussionContainer.appendChild(p);
+    } else {
+        responseData.comments.forEach(comment => {
+            const commentDiv = document.createElement("div");
+            commentDiv.classList.add("comment");
+            commentDiv.innerHTML = `
             <p>From : <strong>${comment.username}</strong></p>
             <p>Title : ${comment.title}</p>
             <p>Message : ${comment.message}</p>
         `;
-        discussionContainer.appendChild(commentDiv);
-    });
+            discussionContainer.appendChild(commentDiv);
+        });
+    }
 
     const AddComment = document.createElement('button')
     AddComment.textContent = 'Add Comment'
     AddComment.classList.add('AddComment')
     AddComment.id = idDiscussion
-    AddComment.addEventListener('click', function (){
+    AddComment.addEventListener('click', function () {
         let id = idDiscussion
         updateFormWithVariable(id)
         showDiv('createCommentForm')

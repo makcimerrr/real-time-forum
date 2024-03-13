@@ -4,7 +4,7 @@ import {getCookie} from "./cookie.js";
 const loginLink = document.getElementById('loginLink');
 const registerLink = document.getElementById('registerLink');
 
-// Ajouter un gestionnaire d'événements pour le clic sur le lien "Login"
+
 loginLink.addEventListener('click', function(event) {
     event.preventDefault(); // Empêcher le comportement par défaut du lien
     showDiv('loginForm');
@@ -15,6 +15,7 @@ registerLink.addEventListener('click', function(event) {
     event.preventDefault(); // Empêcher le comportement par défaut du lien
     showDiv('registrationForm');
 });
+
 
 export function showDiv(divName) {
 

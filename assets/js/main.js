@@ -8,6 +8,7 @@ import {logout} from "./websocket.js";
 import {comment} from "./comment.js";
 
 const username = getCookie("username")
+
 document.addEventListener('DOMContentLoaded', function () {
     // Appeler la fonction pour récupérer et afficher les discussions initiales
     fetchAndDisplayDiscussions();

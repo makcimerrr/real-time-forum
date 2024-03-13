@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="static/css/style.css" rel="stylesheet">
     <link href="static/css/hamburger.css" rel="stylesheet">
+    <link href="static/css/buttonDiscussion.css" rel="stylesheet">
     <title>Real Time Forum</title>
     <style>
         .registrationForm,
@@ -36,7 +37,12 @@
     </button>
 </header>
 <nav>
-    <h1 id="Forum">Forum</h1>
+    <ul>
+        <li><a id="Forum">Accueil</a></li>
+        <li><a>Services</a></li>
+        <li><a>À propos</a></li>
+        <li><a>Contact</a></li>
+    </ul>
     <div class="ErrorNotification" id="ErrorNotification"></div>
     <div class="SuccessNotification" id="SuccessNotification"></div>
     <div class="Notification" id="Notification"></div>
@@ -53,101 +59,127 @@
             <a id="registerLink">Register</a>
         </div>
         <div class="loginForm">
-            <form id="loginForm">
-                <!-- Ajoutez cette div pour afficher les messages d'erreur -->
-                <div id="notifTextLogin" style="color: green;">
-                    <span id="notifMessageLogin"></span>
-                </div>
-
-                <label for="logindata">Username or Email:</label>
-                <input type="text" id="logindata" name="logindata" required><br>
-
-                <label for="loginpassword">Password:</label>
-                <input type="password" id="loginpassword" name="loginpassword" required><br>
-
-                <!-- Ajoutez cette div pour afficher les messages d'erreur -->
-                <div id="errorTextLogin" style="color: red;">
-                    <span id="errorMessageLogin"></span>
-                </div>
-                <button type="submit">Sign in</button>
-            </form>
+            <div class="login-box">
+                <h2>Login</h2>
+                <form id="loginForm">
+                    <div class="user-box">
+                        <input type="text" id="logindata" name="logindata" required>
+                        <label for="logindata">Username or Email</label>
+                    </div>
+                    <div class="user-box">
+                        <input type="password" id="loginpassword" name="loginpassword" required>
+                        <label for="loginpassword">Password</label>
+                    </div>
+                    <div id="errorTextLogin" style="color: red;">
+                        <span id="errorMessageLogin"></span>
+                    </div>
+                    <a>
+                        <button type="submit">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            Submit
+                        </button>
+                    </a>
+                </form>
+            </div>
         </div>
         <div class="registrationForm">
-            <form id="registrationForm">
-                <label for="username">Username:</label>
-                <input type="text" id="username" name="username" required><br>
+            <div class="login-box">
+                <h2>Register</h2>
+                <form id="registrationForm">
+                    <div class="user-box">
+                        <input type="text" id="username" name="username" required>
+                        <label for="username">Username:</label>
+                    </div>
+                    <div class="user-box">
+                        <input type="email" id="email" name="email" required>
+                        <label for="email">Email:</label>
+                    </div>
+                    <div class="user-box">
+                        <input type="password" id="password" name="password" required>
+                        <label for="password">Password:</label>
+                    </div>
+                    <div class="user-box">
+                        <input type="number" id="age" name="age" required min="1">
+                        <label for="age">Age:</label>
+                    </div>
 
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required><br>
+                    <div class="gender-box">
+                        <label for="gender" color="white">Gender:</label>
+                        <select name="gender" id="gender">
+                            <option value="male">Homme</option>
+                            <option value="female">Femme</option>
+                        </select>
+                    </div>
 
-                <label for="password">Password:</label>
-                <input type="password" id="password" name="password" required><br>
+                    <div class="user-box">
+                        <input type="text" id="firstName" name="firstName" required>
+                        <label for="firstName">First Name:</label>
+                    </div>
+                    <div class="user-box">
+                        <input type="text" id="lastName" name="lastName" required>
+                        <label for="lastName">Last Name:</label>
+                    </div>
+                    <div id="errorTextRegister" style="color: red;">
+                        <span id="errorMessageRegister"></span>
+                    </div>
+                    <a>
+                        <button type="submit">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            Submit
+                        </button>
+                    </a>
+                </form>
+            </div>
 
-                <label for="age">Age:</label>
-                <input type="number" id="age" name="age" required min="1"><br>
+            <div class="home">
+                <h3 id="title">Home</h3>
+                <a class="bn13 " id="createPoste">Add a post</a>
+                <div class="chat-container"></div>
+                <article>
+                    <div id="Alldiscussions">
+                    </div>
+                    <div id="pagination"></div>
 
-                <label for="gender">Gender:</label>
-                <select name="gender" id="gender">
-                    <option value="male">Homme</option>
-                    <option value="female">Femme</option>
-                </select><br>
-                <label for="firstName">First Name:</label>
-                <input type="text" id="firstName" name="firstName" required><br>
+                </article>
+            </div>
 
-                <label for="lastName">Last Name:</label>
-                <input type="text" id="lastName" name="lastName" required><br>
+            <div class="createPosteForm">
+                <form id="postForm">
+                    <label for="titlePost">Titre:</label>
+                    <input type="text" id="titlePost" name="titlePost" required><br>
+                    <label for="category">Categories:</label>
+                    <select name="category" id="category">
+                        <option value="objet">Object</option>
+                        <option value="problem">Problem</option>
+                    </select><br>
+                    <label for="message">Message:</label>
+                    <input type="text" id="message" name="message" required><br>
+                    <button type="submit">Envoyer</button>
+                </form>
+            </div>
 
-                <!-- Ajoutez cette div pour afficher les messages d'erreur -->
-                <div id="errorTextRegister" style="color: red;">
-                    <span id="errorMessageRegister"></span>
-                </div>
-                <button type="submit">Sign up</button>
-            </form>
-        </div>
+            <div class="createCommentForm">
+                <h1>Add Comment</h1>
+                <form id="commentForm">
+                    <label for="titleComment">Titre:</label>
+                    <input type="text" id="titleComment" name="titleComment" required><br>
+                    <label for="messageComment">Message:</label>
+                    <input type="text" id="messageComment" name="messageComment" required><br>
+                    <button class="buttonComment" type="submit">Send</button>
+                </form>
+            </div>
 
-        <div class="home">
-            <h3 id="title">Home</h3>
-            <a class="bn13 " id="createPoste">Add a post</a>
-            <div class="chat-container"></div>
-            <article>
-                <div id="Alldiscussions">
-                </div>
-                <button id="previousPageButton">Précédent</button>
-                <button id="nextPageButton">Suivant</button>
-            </article>
-        </div>
+            <section>
+                <div id="showDiscussion" class="showDiscussion"></div>
+            </section>
 
-        <div class="createPosteForm">
-            <form id="postForm">
-                <label for="titlePost">Titre:</label>
-                <input type="text" id="titlePost" name="titlePost" required><br>
-                <label for="category">Categories:</label>
-                <select name="category" id="category">
-                    <option value="objet">Object</option>
-                    <option value="problem">Problem</option>
-                </select><br>
-                <label for="message">Message:</label>
-                <input type="text" id="message" name="message" required><br>
-                <button type="submit">Envoyer</button>
-            </form>
-        </div>
-
-        <div class="createCommentForm">
-            <h1>Add Comment</h1>
-            <form id="commentForm">
-                <label for="titleComment">Titre:</label>
-                <input type="text" id="titleComment" name="titleComment" required><br>
-                <label for="messageComment">Message:</label>
-                <input type="text" id="messageComment" name="messageComment" required><br>
-                <button class="buttonComment" type="submit">Send</button>
-            </form>
-        </div>
-
-        <section>
-            <div id="showDiscussion" class="showDiscussion"></div>
-        </section>
-
-        <script type="module" src="/static/js/main.js"></script>
+            <script type="module" src="/static/js/main.js"></script>
     </main>
 </div>
 <footer>Made by makcime</footer>

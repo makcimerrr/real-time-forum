@@ -43,7 +43,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	UserData.Username = username
-
+	
 	if err != nil {
 		jsonResponse := map[string]interface{}{
 			"success": false,

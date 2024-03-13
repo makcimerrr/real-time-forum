@@ -3,12 +3,16 @@ import {showDiv} from "./show.js";
 import {updateFormWithVariable} from "./comment.js";
 import {displayDiscussion} from "./discussion.js";
 
+let currentPage = 1;
+const discussionsPerPage = 15;
 export async function post() {
     const titlePost = document.getElementById('titlePost').value;
     const category = document.getElementById('category').value;
     const message = document.getElementById('message').value;
 
     let username = getCookie("username");
+
+
 
     const postData = {
         titlePost: titlePost, category: category, message: message, username: username,
@@ -52,7 +56,10 @@ export async function fetchAndDisplayDiscussions(discussion = null) {
 function displayDiscussions(discussions) {
     const Alldiscussions = document.getElementById('Alldiscussions');
     Alldiscussions.innerHTML = '';
-    discussions.forEach(function (discussion) {
+    const startIndex = (currentPage - 1) * discussionsPerPage;
+    const endIndex = startIndex + discussionsPerPage;
+    const currentDiscussions = discussions.slice(startIndex, endIndex);
+    currentDiscussions.forEach(function (discussion) {
         const discussionDiv = document.createElement('div');
         discussionDiv.classList.add('Post');
         discussionDiv.id = `discussion-${discussion.id}`;
@@ -74,9 +81,13 @@ function displayDiscussions(discussions) {
         messageParagraph.classList.add('discussionMessage');
         messageParagraph.style.display = 'none';
         discussionDiv.appendChild(messageParagraph);
+
         const AddComment = document.createElement('button')
-        AddComment.textContent = 'Add Comment'
-        AddComment.classList.add('AddComment')
+        const AddCommentText = document.createElement('span')
+        AddCommentText.textContent = 'Add Comment'
+        AddComment.appendChild(AddCommentText)
+        AddComment.classList.add('bn3637')
+        AddComment.classList.add('bn38')
         AddComment.id = `${discussion.id}`
         AddComment.style.display = 'none';
         AddComment.addEventListener('click', function () {
@@ -84,10 +95,13 @@ function displayDiscussions(discussions) {
             updateFormWithVariable(id)
             showDiv('createCommentForm')
         })
-        discussionDiv.appendChild(AddComment)
+
         const ShowDiscussion = document.createElement('button')
-        ShowDiscussion.textContent = 'Show Discussion'
-        ShowDiscussion.classList.add('ShowDiscussion')
+        const ShowDiscussionText = document.createElement('span')
+        ShowDiscussion.appendChild(ShowDiscussionText)
+        ShowDiscussionText.textContent = 'Show Discussion'
+        ShowDiscussion.classList.add('bn3637')
+        ShowDiscussion.classList.add('bn38')
         ShowDiscussion.id = `${discussion.id}`
         ShowDiscussion.style.display = 'none';
         ShowDiscussion.addEventListener('click', function () {
@@ -96,7 +110,15 @@ function displayDiscussions(discussions) {
             displayDiscussion(id)
             showDiv('showDiscussion')
         })
-        discussionDiv.appendChild(ShowDiscussion)
+
+
+        const divButton = document.createElement('div')
+        divButton.classList.add('divButton')
+        divButton.appendChild(AddComment)
+        divButton.appendChild(ShowDiscussion)
+        discussionDiv.appendChild(divButton)
+
+
         titleHeading.addEventListener('click', function () {
             const messageDiv = discussionDiv.querySelector(`.discussionMessage`);
             if (messageDiv.style.display === 'none') {
@@ -110,5 +132,37 @@ function displayDiscussions(discussions) {
             }
         });
         Alldiscussions.appendChild(discussionDiv);
+    });
+    // Gestion de la pagination
+    const totalPages = Math.ceil(discussions.length / discussionsPerPage);
+    renderPaginationButtons(totalPages);
+}
+
+function renderPaginationButtons(totalPages) {
+    const paginationContainer = document.getElementById('pagination');
+    paginationContainer.innerHTML = '';
+    for (let i = 1; i <= totalPages; i++) {
+        const button = document.createElement('button');
+        button.textContent = i;
+        if (i === currentPage) {
+            button.classList.add('active');
+        }
+        button.addEventListener('click', function () {
+            currentPage = i;
+            fetchAndDisplayDiscussions(currentPage);
+            updateActiveButton();
+        });
+        paginationContainer.appendChild(button);
+    }
+}
+
+function updateActiveButton() {
+    const buttons = document.querySelectorAll('#pagination button');
+    buttons.forEach(function(button, index) {
+        if (index + 1 === currentPage) {
+            button.classList.add('active');
+        } else {
+            button.classList.remove('active');
+        }
     });
 }

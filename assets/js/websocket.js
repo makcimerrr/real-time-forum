@@ -2,7 +2,7 @@ import {deleteCookie} from "./cookie.js";
 import {fetchAndDisplayDiscussions} from "./post.js";
 import {getCookie} from "./cookie.js";
 import {displayUserList} from "./userList.js";
-import {displayChatBox} from "./userList.js";
+import {displayChatBox} from "./chat.js";
 import {showNotification} from "./notif.js";
 
 let NewWebsocket;
@@ -18,6 +18,7 @@ export function logout() {
 
     window.location.reload();
 }
+
 
 
 export function startWebSocket() {
