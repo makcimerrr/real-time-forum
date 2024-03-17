@@ -4,7 +4,7 @@ import {updateFormWithVariable} from "./comment.js";
 import {displayDiscussion} from "./discussion.js";
 
 let currentPage = 1;
-const discussionsPerPage = 15;
+const discussionsPerPage = 12;
 export async function post() {
     const titlePost = document.getElementById('titlePost').value;
     const category = document.getElementById('category').value;
@@ -141,7 +141,41 @@ function displayDiscussions(discussions) {
 function renderPaginationButtons(totalPages) {
     const paginationContainer = document.getElementById('pagination');
     paginationContainer.innerHTML = '';
-    for (let i = 1; i <= totalPages; i++) {
+
+    let startPage, endPage;
+
+    // Si le nombre total de pages est inférieur ou égal à 3, affiche toutes les pages
+    if (totalPages <= 3) {
+        startPage = 1;
+        endPage = totalPages;
+    } else {
+        // Si le nombre total de pages est supérieur à 3, ajuste les pages à afficher
+        if (currentPage <= 3) {
+            startPage = 1;
+            endPage = 3;
+        } else if (currentPage + 2 >= totalPages) {
+            startPage = totalPages - 2;
+            endPage = totalPages;
+        } else {
+            startPage = currentPage - 1;
+            endPage = currentPage + 1;
+        }
+    }
+
+    // Bouton précédent
+    if (currentPage > 1) {
+        const prevButton = document.createElement('button');
+        prevButton.textContent = 'Précédent';
+        prevButton.addEventListener('click', function () {
+            currentPage--;
+            fetchAndDisplayDiscussions(currentPage);
+            updateActiveButton();
+        });
+        paginationContainer.appendChild(prevButton);
+    }
+
+    // Boutons de pagination
+    for (let i = startPage; i <= endPage; i++) {
         const button = document.createElement('button');
         button.textContent = i;
         if (i === currentPage) {
@@ -154,7 +188,20 @@ function renderPaginationButtons(totalPages) {
         });
         paginationContainer.appendChild(button);
     }
+
+    // Bouton suivant
+    if (currentPage < totalPages) {
+        const nextButton = document.createElement('button');
+        nextButton.textContent = 'Suivant';
+        nextButton.addEventListener('click', function () {
+            currentPage++;
+            fetchAndDisplayDiscussions(currentPage);
+            updateActiveButton();
+        });
+        paginationContainer.appendChild(nextButton);
+    }
 }
+
 
 function updateActiveButton() {
     const buttons = document.querySelectorAll('#pagination button');

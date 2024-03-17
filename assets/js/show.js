@@ -1,29 +1,12 @@
 import {getCookie} from "./cookie.js";
 
-// Récupérer les liens par leur ID
-const loginLink = document.getElementById('loginLink');
-const registerLink = document.getElementById('registerLink');
-
-
-loginLink.addEventListener('click', function(event) {
-    event.preventDefault(); // Empêcher le comportement par défaut du lien
-    showDiv('loginForm');
-});
-
-// Ajouter un gestionnaire d'événements pour le clic sur le lien "Register"
-registerLink.addEventListener('click', function(event) {
-    event.preventDefault(); // Empêcher le comportement par défaut du lien
-    showDiv('registrationForm');
-});
-
-
 export function showDiv(divName) {
 
     let username = getCookie("username");
     // Masquer toutes les divs
     const divs = document.querySelectorAll
     (
-        '.logout, .loginForm, .accueil, .registrationForm, .home, .createPosteForm, .createCommentForm, .showDiscussion'
+        '.logout, .accueil, .home, .createPosteForm, .createCommentForm, .showDiscussion'
     );
     divs.forEach(function (div) {
         div.style.display = 'none';
@@ -39,7 +22,12 @@ export function showDiv(divName) {
             titleDiv.innerHTML = ''
             titleDiv.innerHTML = "Home - " + username;
         }
-        selectedDiv.style.display = 'block';
+
+        if (divName === "accueil"){
+            selectedDiv.style.display = 'flex';
+        }else {
+            selectedDiv.style.display = 'block';
+        }
     }
 
 }

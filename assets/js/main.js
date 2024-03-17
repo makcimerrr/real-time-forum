@@ -8,21 +8,18 @@ import {logout} from "./websocket.js";
 import {comment} from "./comment.js";
 
 const toggleButton = document.getElementById('toggleButton');
-
-
-const loginForm = document.getElementById('loginForm');
-const registrationForm = document.getElementById('registrationForm');
+const test1 = document.querySelector('.loginForm');
+const test2 = document.querySelector('.registrationForm');
 
 toggleButton.addEventListener('click', function() {
-    loginForm.style.display = 'none';
-    if (login.style.display === 'none') {
-        registrationForm.style.display = 'block';
+    if (test1.classList.contains('hidden')) {
+        test1.classList.remove('hidden');
+        test2.classList.add('hidden');
     } else {
-        registrationForm.style.display = 'none';
+        test1.classList.add('hidden');
+        test2.classList.remove('hidden');
     }
 });
-
-
 
 const username = getCookie("username")
 
@@ -40,10 +37,6 @@ hamburger.addEventListener("click", function() {
     userListContainer.classList.toggle("is-active");
 });
 
-/*document.getElementById('hamburger').addEventListener('click', function() {
-    document.querySelector('.container').classList.toggle('show-sidebar');
-});*/
-
 
 window.onload = function () {
     const username = getCookie("username");
@@ -59,7 +52,7 @@ document
         if (username) {
             showDiv("home");
         }else {
-            showDiv("loginForm");
+            showDiv("accueil");
         }
     });
 
