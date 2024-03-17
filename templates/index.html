@@ -9,15 +9,15 @@
     <link href="static/css/buttonDiscussion.css" rel="stylesheet">
     <title>Real Time Forum</title>
     <style>
-        .registrationForm,
         .home,
-        .loginForm,
         .createPosteForm,
         .createCommentForm,
         .showDiscussion,
         .SuccessNotification,
         .ErrorNotification,
-        .chat-container {
+        .chat-container,
+        .loginForm,
+        .registrationForm {
             display: none;
         }
 
@@ -28,113 +28,120 @@
 </head>
 
 <body>
-<header>
-    <button id="logout">Logout</button>
-    <button class="hamburger hamburger--collapse" type="button">
-  <span class="hamburger-box">
-    <span class="hamburger-inner"></span>
-  </span>
-    </button>
-</header>
-<nav>
-    <ul>
-        <li><a id="Forum">Accueil</a></li>
-        <li><a>Services</a></li>
-        <li><a>À propos</a></li>
-        <li><a>Contact</a></li>
-    </ul>
-    <div class="ErrorNotification" id="ErrorNotification"></div>
-    <div class="SuccessNotification" id="SuccessNotification"></div>
-    <div class="Notification" id="Notification"></div>
+    <header>
+        <button id="logout">Logout</button>
+        <button class="hamburger hamburger--collapse" type="button">
+            <span class="hamburger-box">
+                <span class="hamburger-inner"></span>
+            </span>
+        </button>
+    </header>
+    <nav>
 
-</nav>
+        <ul>
+            <li><a id="Forum">Accueil</a></li>
+            <li><a>Services</a></li>
+            <li><a>À propos</a></li>
+            <li><a>Contact</a></li>
+        </ul>
+        <div class="ErrorNotification" id="ErrorNotification"></div>
+        <div class="SuccessNotification" id="SuccessNotification"></div>
+        <div class="Notification" id="Notification"></div>
 
-<div class="container">
-    <aside id="userListContainer">
-        <div id="userList"></div>
-    </aside>
-    <main>
-        <div class="accueil">
-            <a id="loginLink">Login</a>
-            <a id="registerLink">Register</a>
-        </div>
-        <div class="loginForm">
-            <div class="login-box">
-                <h2>Login</h2>
-                <form id="loginForm">
-                    <div class="user-box">
-                        <input type="text" id="logindata" name="logindata" required>
-                        <label for="logindata">Username or Email</label>
-                    </div>
-                    <div class="user-box">
-                        <input type="password" id="loginpassword" name="loginpassword" required>
-                        <label for="loginpassword">Password</label>
-                    </div>
-                    <div id="errorTextLogin" style="color: red;">
-                        <span id="errorMessageLogin"></span>
-                    </div>
-                    <a>
-                        <button type="submit">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                            Submit
-                        </button>
-                    </a>
-                </form>
+    </nav>
+
+    <div class="container">
+        <aside id="userListContainer">
+            <div id="userList"></div>
+        </aside>
+        <main>
+
+
+            <div class="accueil">
+                <div class="toggle-button" id="toggleButton">Toggle Forms</div>
+                <a id="loginLink">Login</a>
+                <a id="registerLink">Register</a>
+
             </div>
-        </div>
-        <div class="registrationForm">
-            <div class="login-box">
-                <h2>Register</h2>
-                <form id="registrationForm">
-                    <div class="user-box">
-                        <input type="text" id="username" name="username" required>
-                        <label for="username">Username:</label>
-                    </div>
-                    <div class="user-box">
-                        <input type="email" id="email" name="email" required>
-                        <label for="email">Email:</label>
-                    </div>
-                    <div class="user-box">
-                        <input type="password" id="password" name="password" required>
-                        <label for="password">Password:</label>
-                    </div>
-                    <div class="user-box">
-                        <input type="number" id="age" name="age" required min="1">
-                        <label for="age">Age:</label>
-                    </div>
 
-                    <div class="gender-box">
-                        <label for="gender" color="white">Gender:</label>
-                        <select name="gender" id="gender">
-                            <option value="male">Homme</option>
-                            <option value="female">Femme</option>
-                        </select>
-                    </div>
+            <div class="loginForm">
+                <div class="login-box">
+                    <h2>Login</h2>
+                    <form id="loginForm">
+                        <div class="user-box">
+                            <input type="text" id="logindata" name="logindata" required>
+                            <label for="logindata">Username or Email</label>
+                        </div>
+                        <div class="user-box">
+                            <input type="password" id="loginpassword" name="loginpassword" required>
+                            <label for="loginpassword">Password</label>
+                        </div>
+                        <div id="errorTextLogin" style="color: red;">
+                            <span id="errorMessageLogin"></span>
+                        </div>
+                        <a>
+                            <button type="submit">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                Submit
+                            </button>
+                        </a>
+                    </form>
+                </div>
+            </div>
+            <div class="registrationForm">
+                <div class="login-box">
+                    <h2>Register</h2>
+                    <form id="registrationForm">
+                        <div class="user-box">
+                            <input type="text" id="username" name="username" required>
+                            <label for="username">Username:</label>
+                        </div>
+                        <div class="user-box">
+                            <input type="email" id="email" name="email" required>
+                            <label for="email">Email:</label>
+                        </div>
+                        <div class="user-box">
+                            <input type="password" id="password" name="password" required>
+                            <label for="password">Password:</label>
+                        </div>
+                        <div class="user-box">
+                            <input type="number" id="age" name="age" required min="1">
+                            <label for="age">Age:</label>
+                        </div>
 
-                    <div class="user-box">
-                        <input type="text" id="firstName" name="firstName" required>
-                        <label for="firstName">First Name:</label>
-                    </div>
-                    <div class="user-box">
-                        <input type="text" id="lastName" name="lastName" required>
-                        <label for="lastName">Last Name:</label>
-                    </div>
-                    <div id="errorTextRegister" style="color: red;">
-                        <span id="errorMessageRegister"></span>
-                    </div>
-                    <a>
-                        <button type="submit">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                            Submit
-                        </button>
-                    </a>
-                </form>
+                        <div class="gender-box">
+                            <label for="gender" color="white">Gender:</label>
+                            <select name="gender" id="gender">
+                                <option value="male">Homme</option>
+                                <option value="female">Femme</option>
+                            </select>
+                        </div>
+
+                        <div class="user-box">
+                            <input type="text" id="firstName" name="firstName" required>
+                            <label for="firstName">First Name:</label>
+                        </div>
+                        <div class="user-box">
+                            <input type="text" id="lastName" name="lastName" required>
+                            <label for="lastName">Last Name:</label>
+                        </div>
+                        <div id="errorTextRegister" style="color: red;">
+                            <span id="errorMessageRegister"></span>
+                        </div>
+                        <a>
+                            <button type="submit">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                Submit
+                            </button>
+                        </a>
+                    </form>
+                </div>
             </div>
 
             <div class="home">
@@ -142,8 +149,7 @@
                 <a class="bn13 " id="createPoste">Add a post</a>
                 <div class="chat-container"></div>
                 <article>
-                    <div id="Alldiscussions">
-                    </div>
+                    <div id="Alldiscussions"></div>
                     <div id="pagination"></div>
 
                 </article>
@@ -180,9 +186,9 @@
             </section>
 
             <script type="module" src="/static/js/main.js"></script>
-    </main>
-</div>
-<footer>Made by makcime</footer>
+        </main>
+    </div>
+    <footer>Made by makcime</footer>
 </body>
 
 </html>

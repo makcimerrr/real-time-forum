@@ -7,6 +7,23 @@ import {startWebSocket} from "./websocket.js";
 import {logout} from "./websocket.js";
 import {comment} from "./comment.js";
 
+const toggleButton = document.getElementById('toggleButton');
+
+
+const loginForm = document.getElementById('loginForm');
+const registrationForm = document.getElementById('registrationForm');
+
+toggleButton.addEventListener('click', function() {
+    loginForm.style.display = 'none';
+    if (login.style.display === 'none') {
+        registrationForm.style.display = 'block';
+    } else {
+        registrationForm.style.display = 'none';
+    }
+});
+
+
+
 const username = getCookie("username")
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -41,6 +58,8 @@ document
     .addEventListener("click", function () {
         if (username) {
             showDiv("home");
+        }else {
+            showDiv("loginForm");
         }
     });
 
