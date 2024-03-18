@@ -27,47 +27,55 @@ export async function displayChatBox(user) {
     const messages = await getChatMessages(usernameVerify, user);
 
     const messageGroups = [];
-    for (let i = 0; i < messages.length; i += 10) {
-        messageGroups.push(messages.slice(i, i + 10));
-    }
 
-    const chatBody = document.querySelector('.chat-body');
-
-    let currentGroupIndex = 0;
-    function displayNextGroup() {
-        if (currentGroupIndex < messageGroups.length) {
-            const group = messageGroups[currentGroupIndex];
-            //Affichage des groupes
-            //console.log(`Affichage du groupe ${currentGroupIndex + 1}:`, group);
-            const groupContainer = document.createElement('div');
-            groupContainer.className = 'message-group';
-
-
-            group.forEach(message => {
-                const messageElement = createMessageElement(usernameVerify, message);
-                groupContainer.appendChild(messageElement);
-            });
-
-
-            chatBody.appendChild(groupContainer);
-
-
-            currentGroupIndex++;
+    if (messages && messages.length > 0) {
+        for (let i = 0; i < messages.length; i += 10) {
+            messageGroups.push(messages.slice(i, i + 10));
         }
-    }
 
-    //scroll event
-    chatBody.addEventListener('scroll', function() {
-        const scrollHeight = chatBody.scrollHeight;
-        const scrollTop = chatBody.scrollTop;
-        const clientHeight = chatBody.clientHeight;
+        const chatBody = document.querySelector('.chat-body');
 
-        if (scrollHeight - scrollTop === clientHeight) {
-            displayNextGroup();
+        let currentGroupIndex = 0;
+
+        function displayNextGroup() {
+            if (currentGroupIndex < messageGroups.length) {
+                const group = messageGroups[currentGroupIndex];
+                //Affichage des groupes
+                //console.log(`Affichage du groupe ${currentGroupIndex + 1}:`, group);
+                const groupContainer = document.createElement('div');
+                groupContainer.className = 'message-group';
+
+
+                group.forEach(message => {
+                    const messageElement = createMessageElement(usernameVerify, message);
+                    groupContainer.appendChild(messageElement);
+                });
+
+
+                chatBody.appendChild(groupContainer);
+
+
+                currentGroupIndex++;
+            }
         }
-    });
 
-    displayNextGroup();
+        //scroll event
+        chatBody.addEventListener('scroll', function () {
+            const scrollHeight = chatBody.scrollHeight;
+            const scrollTop = chatBody.scrollTop;
+            const clientHeight = chatBody.clientHeight;
+
+            if (scrollHeight - scrollTop === clientHeight) {
+                displayNextGroup();
+            }
+        });
+
+        displayNextGroup();
+
+    } else {
+        const chatBody = document.querySelector('.chat-body');
+        chatBody.innerHTML = '<p>No messages available</p>';
+    }
 
     const input = document.createElement('input');
     input.className = 'chat-input';
@@ -82,6 +90,7 @@ export async function displayChatBox(user) {
 
     document.body.appendChild(chatBox);
 }
+
 function createMessageElement(usernameVerify, message) {
     const messageElement = document.createElement('div');
     messageElement.className = 'chat-message';
@@ -102,11 +111,13 @@ function createMessageElement(usernameVerify, message) {
 
     return messageElement;
 }
+
 function closeChatBox() {
     const chatContainer = document.querySelector('.chat-container');
     chatContainer.innerHTML = '';
     chatContainer.style.display = 'none';
 }
+
 async function sendMessage(user) {
     const usernameVerify = getCookie("username");
     const input = document.querySelector('.chat-input');

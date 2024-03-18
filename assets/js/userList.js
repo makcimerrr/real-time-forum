@@ -13,55 +13,14 @@ export function displayUserList(usernameVerify, NumberofConnected, List, AllUser
 
     const ul = document.createElement("ul");
 
-    AllUsers.forEach(user => {
+    AllUsers.sort();
+    List.sort();
+
+    List.forEach(user => {
         if (usernameVerify === user) {
             return;
         }
-        const li = document.createElement("li");
-        li.textContent = user;
-        li.id = user;
-
-        if (List.includes(user)) {
-            li.style.position = "relative";
-            li.style.paddingLeft = "20px";
-            li.style.background = "lightgreen";
-            li.style.borderRadius = "5px";
-            li.style.marginBottom = "5px";
-            li.style.listStyleType = "none";
-
-            const indicator = document.createElement("div");
-            indicator.style.position = "absolute";
-            indicator.style.top = "50%";
-            indicator.style.left = "5px";
-            indicator.style.transform = "translateY(-50%)";
-            indicator.style.width = "10px";
-            indicator.style.height = "10px";
-            indicator.style.background = "green";
-            indicator.style.borderRadius = "50%";
-
-            li.appendChild(indicator);
-            ul.prepend(li); // Ajouter au haut
-        } else {
-            li.style.position = "relative";
-            li.style.paddingLeft = "20px";
-            li.style.background = "pink";
-            li.style.borderRadius = "5px";
-            li.style.marginBottom = "5px";
-            li.style.listStyleType = "none";
-
-            const indicator = document.createElement("div");
-            indicator.style.position = "absolute";
-            indicator.style.top = "50%";
-            indicator.style.left = "5px";
-            indicator.style.transform = "translateY(-50%)";
-            indicator.style.width = "10px";
-            indicator.style.height = "10px";
-            indicator.style.background = "red";
-            indicator.style.borderRadius = "50%";
-
-            li.appendChild(indicator);
-            ul.appendChild(li);
-        }
+        const li = createUserListItem(user, "lightgreen");
         li.addEventListener("click", () => {
             if (usernameVerify !== user) {
                 displayChatBox(user);
@@ -69,6 +28,49 @@ export function displayUserList(usernameVerify, NumberofConnected, List, AllUser
                 showNotification("You can't chat with yourself", "error");
             }
         });
+        ul.appendChild(li);
     });
+
+    AllUsers.forEach(user => {
+        if (!List.includes(user) && usernameVerify !== user) {
+            const li = createUserListItem(user, "pink");
+            li.addEventListener("click", () => {
+                if (usernameVerify !== user) {
+                    displayChatBox(user);
+                } else {
+                    showNotification("You can't chat with yourself", "error");
+                }
+            });
+            ul.appendChild(li);
+        }
+    });
+
+
     userList.appendChild(ul);
+}
+
+function createUserListItem(username, color) {
+    const li = document.createElement("li");
+    li.textContent = username;
+    li.id = username;
+    li.style.position = "relative";
+    li.style.paddingLeft = "20px";
+    li.style.background = color;
+    li.style.borderRadius = "5px";
+    li.style.marginBottom = "5px";
+    li.style.listStyleType = "none";
+
+    const indicator = document.createElement("div");
+    indicator.style.position = "absolute";
+    indicator.style.top = "50%";
+    indicator.style.left = "5px";
+    indicator.style.transform = "translateY(-50%)";
+    indicator.style.width = "10px";
+    indicator.style.height = "10px";
+    indicator.style.background = color === "lightgreen" ? "green" : "red";
+    indicator.style.borderRadius = "50%";
+
+    li.appendChild(indicator);
+
+    return li;
 }

@@ -64,7 +64,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 
 func getDiscussionsHandler(w http.ResponseWriter, r *http.Request) {
 	// Exécuter la requête pour récupérer les discussions depuis la base de données
-	rows, err := Db.Query("SELECT id, username, title, message, category FROM discussion_user")
+	rows, err := Db.Query("SELECT id, username, title, message, category FROM discussion_user ORDER BY id DESC")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -81,6 +81,7 @@ func getDiscussionsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		discussions = append(discussions, discussion)
 	}
+
 	if err := rows.Err(); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

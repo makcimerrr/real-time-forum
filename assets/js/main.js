@@ -6,6 +6,7 @@ import {register} from "./register.js";
 import {startWebSocket} from "./websocket.js";
 import {logout} from "./websocket.js";
 import {comment} from "./comment.js";
+import {showNotification} from "./notif.js";
 
 const toggleButton = document.getElementById('toggleButton');
 const toggleButton2 = document.getElementById('toggleButton2');
