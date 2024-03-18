@@ -3,7 +3,6 @@ import {extractTimeFromDate, getCurrentTime} from "./time.js";
 import {showNotification} from "./notif.js";
 
 export async function displayChatBox(user) {
-
     const usernameVerify = getCookie("username");
     const chatBox = document.querySelector('.chat-container');
     chatBox.innerHTML = '';
@@ -26,60 +25,50 @@ export async function displayChatBox(user) {
     chatBox.appendChild(body);
 
     const messages = await getChatMessages(usernameVerify, user);
+
+    const messageGroups = [];
+    for (let i = 0; i < messages.length; i += 10) {
+        messageGroups.push(messages.slice(i, i + 10));
+    }
+
     const chatBody = document.querySelector('.chat-body');
-    function scrollToBottom() {
-        chatBody.scrollTop = chatBody.scrollHeight;
-        console.log("je scroll")
+
+    let currentGroupIndex = 0;
+    function displayNextGroup() {
+        if (currentGroupIndex < messageGroups.length) {
+            const group = messageGroups[currentGroupIndex];
+            //Affichage des groupes
+            //console.log(`Affichage du groupe ${currentGroupIndex + 1}:`, group);
+            const groupContainer = document.createElement('div');
+            groupContainer.className = 'message-group';
+
+
+            group.forEach(message => {
+                const messageElement = createMessageElement(usernameVerify, message);
+                groupContainer.appendChild(messageElement);
+            });
+
+
+            chatBody.appendChild(groupContainer);
+
+
+            currentGroupIndex++;
+        }
     }
 
-    if (messages && messages.length > 0) {
+    //scroll event
+    chatBody.addEventListener('scroll', function() {
+        const scrollHeight = chatBody.scrollHeight;
+        const scrollTop = chatBody.scrollTop;
+        const clientHeight = chatBody.clientHeight;
 
-        let currentDate = null;
+        if (scrollHeight - scrollTop === clientHeight) {
+            displayNextGroup();
+        }
+    });
 
-        messages.sort((a, b) => {
-            const dateA = new Date(a.time);
-            const dateB = new Date(b.time);
-            return dateA - dateB;
-        });
-        messages.forEach(message => {
+    displayNextGroup();
 
-            const messageDate = message.time.split(' ')[0];
-            if (messageDate !== currentDate) {
-                const dateSeparator = document.createElement('div');
-                dateSeparator.className = 'date-separator';
-                dateSeparator.textContent = messageDate;
-                chatBody.appendChild(dateSeparator);
-                currentDate = messageDate;
-            }
-
-            const messageElement = document.createElement('div');
-            messageElement.className = 'chat-message';
-
-            const sender = message.sendUser === usernameVerify ? 'You' : message.sendUser;
-            const messageText = message.message;
-            const time = extractTimeFromDate(message.time);
-
-            const messageClass = message.sendUser === usernameVerify ? 'you' : 'other';
-
-            messageElement.innerHTML = `
-<div class="message-container ${messageClass}">
-            <span class="sender">${sender}</span>: 
-            <span class="message">${messageText}</span>
-            <span class="time">${time}</span>
-            </div>
-        `;
-
-            body.appendChild(messageElement);
-        });
-
-        chatBox.appendChild(body);
-        setTimeout(scrollToBottom, 0);
-    } else {
-        chatBody.innerHTML = '<p>No messages available</p>';
-    }
-
-
-    // Création de la zone de saisie
     const input = document.createElement('input');
     input.className = 'chat-input';
     input.placeholder = 'Type your message here...';
@@ -90,17 +79,34 @@ export async function displayChatBox(user) {
     });
     chatBox.appendChild(input);
 
-    // Ajout de la boîte de chat à la page
+
     document.body.appendChild(chatBox);
 }
+function createMessageElement(usernameVerify, message) {
+    const messageElement = document.createElement('div');
+    messageElement.className = 'chat-message';
 
+    const sender = message.sendUser === usernameVerify ? 'You' : message.sendUser;
+    const messageText = message.message;
+    const time = extractTimeFromDate(message.time);
+
+    const messageClass = message.sendUser === usernameVerify ? 'you' : 'other';
+
+    messageElement.innerHTML = `
+        <div class="message-container ${messageClass}">
+            <span class="sender">${sender}</span>: 
+            <span class="message">${messageText}</span>
+            <span class="time">${time}</span>
+        </div>
+    `;
+
+    return messageElement;
+}
 function closeChatBox() {
     const chatContainer = document.querySelector('.chat-container');
     chatContainer.innerHTML = '';
     chatContainer.style.display = 'none';
 }
-
-// Fonction pour envoyer le message
 async function sendMessage(user) {
     const usernameVerify = getCookie("username");
     const input = document.querySelector('.chat-input');

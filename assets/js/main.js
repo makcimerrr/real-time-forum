@@ -8,16 +8,27 @@ import {logout} from "./websocket.js";
 import {comment} from "./comment.js";
 
 const toggleButton = document.getElementById('toggleButton');
+const toggleButton2 = document.getElementById('toggleButton2');
 const test1 = document.querySelector('.loginForm');
 const test2 = document.querySelector('.registrationForm');
 
 toggleButton.addEventListener('click', function() {
     if (test1.classList.contains('hidden')) {
         test1.classList.remove('hidden');
-        test2.classList.add('hidden');
+        test2.classList.add('hidden2')
     } else {
         test1.classList.add('hidden');
-        test2.classList.remove('hidden');
+        test2.classList.remove('hidden2');
+    }
+});
+
+toggleButton2.addEventListener('click', function() {
+    if (test2.classList.contains('hidden2')) {
+        test2.classList.remove('hidden2');
+        test1.classList.add('hidden');
+    } else {
+        test2.classList.add('hidden2');
+        test1.classList.remove('hidden');
     }
 });
 
