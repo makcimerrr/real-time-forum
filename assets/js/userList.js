@@ -1,9 +1,11 @@
-import {getCookie} from "./cookie.js";
+import {getCookie, setCookie} from "./cookie.js";
 import {showNotification} from "./notif.js";
 import {displayChatBox} from "./chat.js";
+import {showDiv} from "./show.js";
+import {startWebSocket} from "./websocket.js";
 
 
-export function displayUserList(usernameVerify, NumberofConnected, List, AllUsers) {
+export async function displayUserList(usernameVerify, NumberofConnected, List, AllUsers) {
     const userList = document.getElementById("userList");
     userList.innerHTML = "";
 
@@ -12,9 +14,13 @@ export function displayUserList(usernameVerify, NumberofConnected, List, AllUser
     userList.appendChild(Number);
 
     const ul = document.createElement("ul");
+    ul.id = "list";
 
     AllUsers.sort();
     List.sort();
+
+    const ListUserTalk = await ConversationUser();
+    console.log(ListUserTalk);
 
     List.forEach(user => {
         if (usernameVerify === user) {
@@ -42,6 +48,13 @@ export function displayUserList(usernameVerify, NumberofConnected, List, AllUser
                 }
             });
             ul.appendChild(li);
+        }
+    });
+
+    ListUserTalk.reverse().forEach(user => {
+        const li = ul.querySelector(`#${user}`);
+        if (li) {
+            ul.insertBefore(li, ul.firstChild);
         }
     });
 
@@ -73,4 +86,49 @@ function createUserListItem(username, color) {
     li.appendChild(indicator);
 
     return li;
+}
+
+async function ConversationUser() {
+    const username = getCookie("username");
+    const conversationData = {
+        username: username,
+    };
+    try {
+        const response = await fetch('/getConversations', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(conversationData)
+        });
+
+        if (response.ok) {
+            const responseData = await response.json();
+            return responseData.message
+        } else {
+            throw Error('Erreur lors de la requête.');
+        }
+    } catch (error) {
+        console.error('Erreur :', error);
+    }
+}
+
+export function updateUserListReceiver(receiver) {
+    const userList = document.getElementById("list");
+
+    const li = userList.querySelector(`#${receiver}`);
+    if (li) {
+        userList.insertBefore(li, userList.firstChild);
+    }
+
+}
+
+export function updateUserListSender(sender) {
+    const userList = document.getElementById("list");
+
+    const li = userList.querySelector(`#${sender}`);
+    if (li) {
+        userList.insertBefore(li, userList.firstChild);
+    }
+
 }

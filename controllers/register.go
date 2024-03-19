@@ -71,6 +71,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 			return
 		}
+
 		jsonResponse := map[string]interface{}{
 			"success": true,
 			"message": "Enregistrement réussie",

@@ -30,6 +30,7 @@ func StartServer() {
 	http.HandleFunc("/discussion", displayDiscussion)
 	http.HandleFunc("/chat", chatHandler)
 	http.HandleFunc("/getChatMessages", getChatMessages)
+	http.HandleFunc("/getConversations", getConversations)
 	go handleMessages()
 
 	fs := http.FileServer(http.Dir("assets"))

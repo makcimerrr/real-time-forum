@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -118,4 +119,53 @@ func getChatMessages(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+func getConversations(w http.ResponseWriter, r *http.Request) {
+	// Parse request body to get sender and receiver
+	var requestBody struct {
+		Username string `json:"username"`
+	}
+	var ListUserTalk []string
+	err := json.NewDecoder(r.Body).Decode(&requestBody)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	rows, err := Db.Query("SELECT CASE WHEN sendUser = ? THEN toUser ELSE sendUser END AS user_name, MAX(time) AS last_message_time FROM private_message WHERE sendUser = ? OR toUser = ? GROUP BY user_name ORDER BY last_message_time DESC", requestBody.Username, requestBody.Username, requestBody.Username)
+	if err != nil {
+		fmt.Println("Erreur lors de l'exécution de la requête :", err)
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var username string
+		var lastMessageTime string
+		err := rows.Scan(&username, &lastMessageTime)
+		if err != nil {
+			fmt.Println("Erreur lors de la lecture des données de la ligne :", err)
+			return
+		}
+
+		ListUserTalk = append(ListUserTalk, username)
+		fmt.Println("Utilisateur avec lequel l'utilisateur a parlé :", username)
+		fmt.Println("Dernier message time :", lastMessageTime)
+	}
+
+	if err := rows.Err(); err != nil {
+		fmt.Println("Erreur lors du parcours des résultats :", err)
+		return
+	}
+
+	jsonResponse := map[string]interface{}{
+		"success": true,
+		"message": ListUserTalk,
+	}
+	err = json.NewEncoder(w).Encode(jsonResponse)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 }
