@@ -25,7 +25,7 @@ export async function login() {
         if (response.ok) {
             const responseData = await response.json();
             if (responseData.success) {
-                setCookie("username", responseData.username, 30, "strict"); // 30 jours de durée de vie du cookie
+                setCookie("username", responseData.username, 30, "strict");
                 setCookie("token", responseData.token, 30, "strict");
                 showDiv("home")
                 startWebSocket();
