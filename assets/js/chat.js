@@ -6,6 +6,116 @@ export async function displayChatBox(user) {
     const usernameVerify = getCookie("username");
     const chatBox = document.querySelector('.chat-container');
     chatBox.innerHTML = '';
+    chatBox.style.display = 'block';
+
+    const header = document.createElement('div');
+    header.className = 'chat-header';
+    header.textContent = 'Chat with ' + user;
+    chatBox.appendChild(header);
+
+    const closChatBox = document.createElement("span");
+    closChatBox.className = 'closeChatBox';
+    closChatBox.textContent = '×';
+    closChatBox.addEventListener('click', closeChatBox);
+    chatBox.appendChild(closChatBox);
+
+    const body = document.createElement('div');
+    body.className = 'chat-body';
+    chatBox.appendChild(body);
+
+    const chatBody = document.querySelector('.chat-body');
+    chatBody.innerHTML = ''; // Efface le contenu existant de la div chat-body
+
+    const messages = await getChatMessages(usernameVerify, user);
+
+    if (messages && messages.length > 0) {
+
+        console.log(messages.length)
+
+        const numberOfGroups = Math.ceil(messages.length / 10);
+        console.log(numberOfGroups)
+
+
+        messages.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        let currentGroupIndex = 0;
+
+
+        console.log("currentGroupIndex: " + currentGroupIndex);
+
+        const groups = [];
+        for (let i = 0; i < numberOfGroups; i++) {
+            const startIndex = messages.length - ((i + 1) * 10);
+            const endIndex = startIndex + 10;
+            groups.push(messages.slice(startIndex >= 0 ? startIndex : 0, endIndex));
+        }
+
+        const group = groups[currentGroupIndex];
+       const firstGroup = displayMessages(chatBody, group, usernameVerify);
+
+       chatBody.appendChild(firstGroup);
+
+
+        chatBody.addEventListener('scroll', function () {
+            const scrollTop = chatBody.scrollTop;
+            if (scrollTop === 0 && currentGroupIndex >= 0) {
+                if (currentGroupIndex < numberOfGroups- 1) {
+                    currentGroupIndex++;
+                    const group = groups[currentGroupIndex];
+                    const displayGroup = displayMessages(chatBody, group, usernameVerify);
+
+                    chatBody.insertBefore(displayGroup, chatBody.firstChild);
+                    console.log("currentGroupIndex: " + currentGroupIndex);
+                }
+            }
+        });
+
+    } else {
+        const messageElement = document.createElement('p');
+        messageElement.textContent = 'No messages yet';
+        chatBody.appendChild(messageElement);
+    }
+
+    const input = document.createElement('input');
+    input.className = 'chat-input';
+    input.placeholder = 'Type your message here...';
+    input.addEventListener('keydown', function (event) {
+        if (event.keyCode === 13) {
+            sendMessage(user);
+        }
+    });
+    chatBox.appendChild(input);
+
+    document.body.appendChild(chatBox);
+
+    chatBody.scrollTop = chatBody.scrollHeight - chatBody.clientHeight;
+}
+
+function displayMessages(chatBody, messages, usernameVerify) {
+    const group = document.createElement('div');
+    group.className = 'group';
+    messages.forEach(message => {
+        const messageElement = createMessageElement(usernameVerify, message);
+        group.appendChild(messageElement);
+    });
+
+    chatBody.scrollTop = chatBody.scrollHeight - chatBody.clientHeight;
+
+    return group;
+}
+
+function createDateSeparator(date) {
+    const separator = document.createElement('div');
+    separator.className = 'date-separator';
+    separator.textContent = date;
+    return separator;
+}
+
+
+/*export async function displayChatBox(user) {
+    const usernameVerify = getCookie("username");
+    const chatBox = document.querySelector('.chat-container');
+    chatBox.innerHTML = '';
 
     chatBox.style.display = 'block';
 
@@ -28,6 +138,8 @@ export async function displayChatBox(user) {
 
     const messages = await getChatMessages(usernameVerify, user);
 
+    console.log(messages)
+
     const messageGroups = [];
 
     if (messages && messages.length > 0) {
@@ -41,6 +153,7 @@ export async function displayChatBox(user) {
         let currentGroupIndex = messageGroups.length - 1; // Start from the latest messages
         let messagesToDisplay = [];
 
+        let isFirstOpen = true;
         function displayNextGroup() {
             if (currentGroupIndex >= 0) {
                 const group = messageGroups[currentGroupIndex];
@@ -63,14 +176,8 @@ export async function displayChatBox(user) {
 
                 chatBody.insertBefore(groupContainer, chatBody.firstChild);
 
-                // Save current scroll position
-                const scrollTop = chatBody.scrollTop;
+                    chatBody.scrollTop =  chatBody.scrollHeight;
 
-                // Insert the group container at the top of the chat body
-                chatBody.insertBefore(groupContainer, chatBody.firstChild);
-
-                // Restore previous scroll position
-                chatBody.scrollTop = scrollTop + (chatBody.scrollHeight - chatBody.clientHeight);
 
                 currentGroupIndex--;
                 console.log("Group", currentGroupIndex + 1, "has", messagesToDisplay.length, "messages");
@@ -81,8 +188,6 @@ export async function displayChatBox(user) {
                 }
             }
         }
-
-
 
         chatBody.addEventListener('scroll', function () {
             const scrollTop = chatBody.scrollTop;
@@ -109,14 +214,13 @@ export async function displayChatBox(user) {
 
     document.body.appendChild(chatBox);
 }
+
 function groupMessagesByDate(messages) {
     const groups = [];
     let currentDate = null;
     let currentGroup = null;
-
     messages.forEach(message => {
         const messageDate = message.time.split(' ')[0];
-
         if (messageDate !== currentDate) {
             if (currentGroup) {
                 groups.push(currentGroup); // Add the latest group to the end
@@ -124,25 +228,19 @@ function groupMessagesByDate(messages) {
             currentGroup = { date: messageDate, messages: [] };
             currentDate = messageDate;
         }
-
         currentGroup.messages.push(message); // Add the message to the group
     });
-
     if (currentGroup) {
         groups.push(currentGroup); // Add the last group to the end
     }
-
     return groups // Reverse the order of groups to display the latest first
 }
-
 function createDateSeparator(date) {
     const separator = document.createElement('div');
     separator.className = 'date-separator';
     separator.textContent = date;
     return separator;
-}
-
-
+}*/
 
 function createMessageElement(usernameVerify, message) {
     const messageElement = document.createElement('div');
@@ -153,6 +251,7 @@ function createMessageElement(usernameVerify, message) {
     const time = extractTimeFromDate(message.time);
 
     const messageClass = message.sendUser === usernameVerify ? 'you' : 'other';
+
 
     messageElement.innerHTML = `
         <div class="message-container ${messageClass}">
