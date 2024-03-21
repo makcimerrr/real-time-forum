@@ -36,7 +36,6 @@ toggleButton2.addEventListener('click', function() {
 const username = getCookie("username")
 
 document.addEventListener('DOMContentLoaded', function () {
-    // Appeler la fonction pour récupérer et afficher les discussions initiales
     fetchAndDisplayDiscussions();
     // Gérer le clic sur le titre de chaque discussion pour afficher le message
 });
@@ -61,10 +60,11 @@ window.onload = function () {
 document
     .getElementById("Forum")
     .addEventListener("click", function () {
-        if (username) {
+        const usernameVerify = getCookie("username")
+        if (usernameVerify) {
             showDiv("home");
         }else {
-            showDiv("accueil");
+            showNotification("Veuillez vous connecter pour accéder au forum", "notif")
         }
     });
 

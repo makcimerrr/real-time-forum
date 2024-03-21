@@ -292,7 +292,7 @@ async function sendMessage(user) {
             if (response.ok) {
                 const responseData = await response.json();
                 if (responseData.success) {
-                    showNotification("Message sent", "success")
+                    showNotification("Message sent", "send")
                     input.value = '';
                     displayChatBox(user);
                 } else {
