@@ -31,10 +31,11 @@ export async function register() {
         if (response.ok) {
             const responseData = await response.json();
             if (responseData.success) {
-                console.log("Success Register");
-                showDiv("login");
-                window.location.reload();
-                showNotification(responseData.notif, "succes")
+                showNotification(responseData.notif, "success")
+                const test1 = document.querySelector('.loginForm');
+                const test2 = document.querySelector('.registrationForm');
+                test1.classList.remove('hidden');
+                test2.classList.add('hidden2');
             } else {
                 document.getElementById('errorMessageRegister').innerText = responseData.message;
             }

@@ -5,6 +5,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
+	"strconv"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -32,9 +33,36 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	var isError bool
 
+	// Vérification des champs
+	if registerData.Username == "" || registerData.Email == "" || registerData.Password == "" || registerData.Age == "" || registerData.Gender == "" || registerData.FirstName == "" || registerData.LastName == "" {
+		isError = true
+		jsonResponse := map[string]interface{}{
+			"success": false,
+			"message": "Veuillez remplir tous les champs",
+		}
+		err := json.NewEncoder(w).Encode(jsonResponse)
+		if err != nil {
+			return
+		}
+	}
+
+	//convert string into int
+	_, err := strconv.Atoi(registerData.Age)
+	if err != nil {
+		isError = true
+		jsonResponse := map[string]interface{}{
+			"success": false,
+			"message": "Age invalide",
+		}
+		err := json.NewEncoder(w).Encode(jsonResponse)
+		if err != nil {
+			return
+		}
+	}
+
 	// Vérification si le nom d'utilisateur est déjà utilisé
 	var existingUsername string
-	err := Db.QueryRow("SELECT username FROM users WHERE username = ?", registerData.Username).Scan(&existingUsername)
+	err = Db.QueryRow("SELECT username FROM users WHERE username = ?", registerData.Username).Scan(&existingUsername)
 	if err == nil {
 		isError = true
 		jsonResponse := map[string]interface{}{

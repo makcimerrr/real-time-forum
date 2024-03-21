@@ -51,12 +51,16 @@ export async function displayUserList(usernameVerify, NumberofConnected, List, A
         }
     });
 
-    ListUserTalk.reverse().forEach(user => {
-        const li = ul.querySelector(`#${user}`);
-        if (li) {
-            ul.insertBefore(li, ul.firstChild);
-        }
-    });
+    if (ListUserTalk) {
+
+        ListUserTalk.reverse().forEach(user => {
+            const li = ul.querySelector(`#${user}`);
+            if (li) {
+                ul.insertBefore(li, ul.firstChild);
+            }
+        });
+
+    }
 
 
     userList.appendChild(ul);

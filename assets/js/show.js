@@ -6,7 +6,7 @@ export function showDiv(divName) {
     // Masquer toutes les divs
     const divs = document.querySelectorAll
     (
-        '.logout, .accueil, .home, .createPosteForm, .createCommentForm, .showDiscussion, .messagerie'
+        '.logout, .accueil, .home, .createPosteForm, .createCommentForm, .showDiscussion, .messagerie, .loginForm, .registerForm'
     );
     divs.forEach(function (div) {
         div.style.display = 'none';

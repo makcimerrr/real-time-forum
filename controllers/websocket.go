@@ -46,7 +46,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			if websocket.IsCloseError(err, websocket.CloseGoingAway) {
 				log.Println("Connexion interrompue de la part de l'utilisateur :", username) //Refresh de la page
 			} else if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-				log.Println("Déconnexion") //Logout
+				log.Println("Déconnexion de l'utilisateur :", username) //Logout
 			} else if websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
 				log.Println("Error:", err) //Error
 			}

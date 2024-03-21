@@ -1,6 +1,8 @@
 package controllers
 
-import "log"
+import (
+	"log"
+)
 
 func updateList(username string, add bool) {
 	rows, _ := Db.Query("SELECT username FROM users")
