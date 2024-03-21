@@ -75,7 +75,8 @@ function displayDiscussionDetails(responseData, idDiscussion) {
 
     const AddComment = document.createElement('button')
     AddComment.textContent = 'Add Comment'
-    AddComment.classList.add('AddComment')
+    AddComment.classList.add('bn3637')
+    AddComment.classList.add('bn38')
     AddComment.id = idDiscussion
     AddComment.addEventListener('click', function () {
         let id = idDiscussion

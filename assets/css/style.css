@@ -9,6 +9,7 @@ code {
 }
 
 body {
+
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
     "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
@@ -19,6 +20,15 @@ body {
     min-height: 100vh;
     margin: 0;
     overflow: hidden; /* Empêche le défilement de la page */
+}
+
+@keyframes blurBackground {
+    0% {
+        filter: blur(5px);
+    }
+    100% {
+        filter: blur(10px);
+    }
 }
 
 .container {
@@ -35,8 +45,15 @@ body {
 }
 
 #userListContainer.is-active {
+    display: flex;
+    flex-direction: column;
     width: 250px;
     padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    height: 400px;
+    overflow: auto;
 }
 
 main {
@@ -341,11 +358,11 @@ li {
     position: fixed;
     bottom: 50px;
     left: 50%;
-    transform: translateX(-50%); /* Décale les boutons de moitié de leur propre largeur vers la gauche pour les centrer */
+    transform: translateX(-50%);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000; /* Assure que les boutons de pagination restent au-dessus du contenu */
+    z-index: 1000;
 }
 
 #pagination button {
@@ -357,7 +374,6 @@ li {
     cursor: pointer;
 }
 
-/* Style du bouton de pagination actif */
 #pagination button.active {
     background-color: #007bff;
     color: #fff;
@@ -606,7 +622,7 @@ li {
     position: absolute;
     top: -60px;
     left: 0;
-    width: 100%; /* Modifier la largeur selon vos besoins */
+    width: 100%;
     height: 100%;
     transition: transform 0.5s ease-in-out, opacity 0.25s step-end;
 }
@@ -668,14 +684,14 @@ li {
 }
 
 .conversation {
-    overflow-y: auto; /* Rendre la zone de conversation scrollable */
-    flex: 1; /* La conversation prendra tout l'espace disponible */
+    overflow-y: auto;
+    flex: 1;
     padding: 10px;
 }
 
 .input-container {
     display: flex;
-    align-items: center; /* Centrer les éléments verticalement */
+    align-items: center;
     padding: 10px;
     background-color: #f0f0f0;
 }
@@ -697,4 +713,87 @@ li {
     cursor: pointer;
 }
 
+.createPosteForm {
+    width: 50%;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #333;
+    color: #fff;
+    border-radius: 5px;
+}
 
+.createPosteForm label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.createPosteForm input[type="text"],
+.createPosteForm select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+
+.createPosteForm button[type="submit"] {
+    background-color: #fff;
+    color: #333;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+.createPosteForm button[type="submit"]:hover {
+    background-color: #555;
+    color: #fff;
+}
+
+.createCommentForm {
+    width: 50%;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #333;
+    color: #fff;
+    border-radius: 5px;
+}
+
+.createCommentForm h1 {
+    margin-bottom: 20px;
+}
+
+.createCommentForm label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.createCommentForm input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+
+.createCommentForm .buttonComment {
+    background-color: #fff;
+    color: #333;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+.createCommentForm .buttonComment:hover {
+    background-color: #555;
+    color: #fff;
+}
+
+#showDiscussion {
+    width: 80%; /* Largeur de 80% */
+    margin: 0 auto; /* Centrage horizontal */
+    padding: 20px; /* Espacement intérieur */
+    background-color: #f0f0f0; /* Couleur de fond grise */
+}
+
+.showDiscussion {
+    font-size: 16px; /* Taille de police par défaut */
+    color: #333; /* Couleur de texte par défaut */
+}
