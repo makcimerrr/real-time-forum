@@ -77,7 +77,7 @@ export async function displayChatBox(user) {
                         console.log("currentGroupIndex: " + currentGroupIndex);
 
                         loadingNextGroup = false;
-                    }, 1000); // Délai avant le prochain groupe.
+                    }, 1000); // Délai avant le prochain groupe
                 }
             }
         });
