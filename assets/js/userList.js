@@ -20,7 +20,6 @@ export async function displayUserList(usernameVerify, NumberofConnected, List, A
     List.sort();
 
     const ListUserTalk = await ConversationUser();
-    console.log(ListUserTalk);
 
     List.forEach(user => {
         if (usernameVerify === user) {

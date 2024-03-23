@@ -149,8 +149,6 @@ func getConversations(w http.ResponseWriter, r *http.Request) {
 		}
 
 		ListUserTalk = append(ListUserTalk, username)
-		fmt.Println("Utilisateur avec lequel l'utilisateur a parlé :", username)
-		fmt.Println("Dernier message time :", lastMessageTime)
 	}
 
 	if err := rows.Err(); err != nil {

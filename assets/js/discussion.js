@@ -52,6 +52,9 @@ function displayDiscussionDetails(responseData, idDiscussion) {
         discussionContainer.appendChild(discussionDiv);
     });
 
+    const AllComments = document.createElement("div")
+    AllComments.classList.add("AllComments")
+
     if (!responseData.comments || responseData.comments.length === 0) {
         const p = document.createElement("p");
         p.textContent = "No comments yet";
@@ -69,9 +72,11 @@ function displayDiscussionDetails(responseData, idDiscussion) {
             <p>Title : ${comment.title}</p>
             <p>Message : ${comment.message}</p>
         `;
-            discussionContainer.appendChild(commentDiv);
+            AllComments.appendChild(commentDiv);
         });
     }
+
+    discussionContainer.appendChild(AllComments)
 
     const AddComment = document.createElement('button')
     AddComment.textContent = 'Add Comment'

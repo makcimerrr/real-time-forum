@@ -42,7 +42,9 @@ export function startWebSocket() {
                 }
                 fetchAndDisplayDiscussions();
             } else if (message.type === 'comment') {
-                //fetchAndDisplayDiscussions();
+                console.log("helloo")
+                fetchAndDisplayDiscussions();
+                showNotification("Un nouveau commentaire !", "success")
             } else if (message.type === 'login') {
                 if (message.data.username === username) {
                     displayUserList(message.data.username, message.data.connected, message.data.list, message.data.allUsers)
