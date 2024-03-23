@@ -1,6 +1,7 @@
 import {getCookie} from "./cookie.js";
 import {extractTimeFromDate, getCurrentTime} from "./time.js";
 import {showNotification} from "./notif.js";
+import {sendTypingMessage, stopTypingMessage} from "./typing.js";
 
 export async function displayChatBox(user) {
     const usernameVerify = getCookie("username");
@@ -51,11 +52,11 @@ export async function displayChatBox(user) {
         }
 
         const group = groups[currentGroupIndex];
-       const firstGroup = displayMessages(chatBody, group, usernameVerify);
+        const firstGroup = displayMessages(chatBody, group, usernameVerify);
 
-       chatBody.appendChild(firstGroup);
+        chatBody.appendChild(firstGroup);
 
-       //Limite scroll in page :
+        //Limite scroll in page :
 
         let loadingNextGroup = false;
         let scrollTimeout;
@@ -88,12 +89,28 @@ export async function displayChatBox(user) {
         chatBody.appendChild(messageElement);
     }
 
+
+    const typingIndicator = document.createElement('div');
+    typingIndicator.id = 'typing-indicator';
+    typingIndicator.style.display = 'none';
+    chatBox.appendChild(typingIndicator);
+
     const input = document.createElement('input');
     input.className = 'chat-input';
     input.placeholder = 'Type your message here...';
     input.addEventListener('keydown', function (event) {
         if (event.keyCode === 13) {
             sendMessage(user);
+        }
+    });
+
+    input.addEventListener('input', function () {
+        const inputValue = input.value.trim();
+
+        if (inputValue) {
+            sendTypingMessage(user, usernameVerify);
+        } else {
+            stopTypingMessage(user, usernameVerify);
         }
     });
     chatBox.appendChild(input);

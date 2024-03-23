@@ -210,6 +210,8 @@ li {
 }
 
 .chat-header {
+    display: flex;
+    align-items: center;
     background-color: #f0f0f0;
     padding: 10px;
     border-bottom: 1px solid #ccc;
@@ -800,4 +802,25 @@ li {
 }
 
 
+.typing-animation {
+    display: inline-block;
+    margin-left: 10px; /* Ajustez la marge selon vos besoins */
+    font-size: 0.8em; /* Ajustez la taille de la police selon vos besoins */
+    color: #888; /* Couleur du texte de l'animation */
+}
+
+.typing-animation .dot1, .typing-animation .dot2, .typing-animation .dot3 {
+    animation: typing-dot-animation 1s infinite;
+    display: inline-block;
+}
+
+@keyframes typing-dot-animation {
+    0% { opacity: 0; }
+    50% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.typing-animation .dot1 { animation-delay: 0s; }
+.typing-animation .dot2 { animation-delay: 0.3s; }
+.typing-animation .dot3 { animation-delay: 0.6s; }
 

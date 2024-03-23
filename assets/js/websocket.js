@@ -4,6 +4,7 @@ import {getCookie} from "./cookie.js";
 import {displayUserList, updateUserListReceiver, updateUserListSender} from "./userList.js";
 import {displayChatBox} from "./chat.js";
 import {showNotification} from "./notif.js";
+import {toggleTypingAnimation} from "./typing.js";
 
 let NewWebsocket;
 
@@ -24,9 +25,22 @@ export function startWebSocket() {
     // Vérifier si la connexion WebSocket n'est pas déjà établie
     if (!NewWebsocket) {
         const username = getCookie("username");
+
         // Code JavaScript pour se connecter au serveur WebSocket et afficher la liste des utilisateurs connectés
-        NewWebsocket = new WebSocket("ws://localhost:8080/ws?username=" + username);
-        // Ajouter des gestionnaires d'événements pour la connexion WebSocket
+
+        function getServerAddress() {
+            const currentUrl = window.location.href;
+            if (currentUrl.includes("localhost")) {
+                return "ws://localhost:8080/ws";
+            } else {
+                return "ws://192.168.1.62:8080/ws";
+            }
+        }
+
+        var serverAddress = getServerAddress();
+        NewWebsocket = new WebSocket(serverAddress + "?username=" + username);
+        //NewWebsocket = new WebSocket("ws://localhost:8080/ws?username=" + username);
+
         NewWebsocket.onopen = function (event) {
             console.log('Connexion WebSocket établie pour l\'utilisateur ' + username);
         };
@@ -69,8 +83,20 @@ export function startWebSocket() {
                         displayChatBox(message.data.senderUser); // Actualiser la boîte de chat
                         chatBody.scrollTop = chatBody.scrollHeight - chatBody.offsetHeight;
                     });
-                }else {
+                } else {
                     updateUserListReceiver(message.data.receiverUser)
+                }
+            } else if (message.type === 'typing') {
+                console.log(message.data)
+                if (message.data.receiver === username) {
+                    const isDisplayTyping = document.getElementById('typing-indicator').style.display !== 'none';
+                    if (!isDisplayTyping) {
+                        toggleTypingAnimation(true)
+                    }
+                }
+            } else if (message.type === 'not-typing') {
+                if (message.data.receiver === username) {
+                    toggleTypingAnimation(false)
                 }
             }
         };
